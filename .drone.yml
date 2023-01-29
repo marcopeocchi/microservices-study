@@ -9,7 +9,6 @@ steps:
   - apk update
   - apk add go nodejs npm gcc sqlite musl-dev
 
-steps:
 - name: build frontend
   image: alpine
   commands:
@@ -18,8 +17,7 @@ steps:
   - npm run build
   - cd ..
   - CGO_ENABLED=1 go build -o fuu main.go
-
-steps:
+  
 - name: build backend
   image: alpine
   commands:
