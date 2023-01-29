@@ -8,4 +8,8 @@ steps:
   commands:
   - apk update
   - apk add go nodejs npm gcc sqlite musl-dev
+  - cd frontend
+  - npm i
+  - npm build
+  - cd ..
   - CGO_ENABLED=1 go build -o fuu main.go
