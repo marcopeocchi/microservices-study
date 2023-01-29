@@ -14,7 +14,7 @@ steps:
     PASSWORD:
       from_secret: DOCKER_HUB_PASS
   commands:
-  - sleep 5
+  - sleep 10
   - docker login -u $USERNAME -p $PASSWORD
   - docker buildx create --use
   - docker buildx build --push --platform linux/amd64 --tag "$USERNAME/fuu:latest" .
