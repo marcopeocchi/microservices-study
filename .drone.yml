@@ -11,7 +11,7 @@ steps:
   - pnpm build
 - name: Compile backend
   commands:
-  - CGO_ENABLED=1 go build -o fuu main.go
+  - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu main.go
 - name: Deploy
   commands:
   - chmod +x ./fuu
