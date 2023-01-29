@@ -3,13 +3,24 @@ type: docker
 name: fuu integration pipeline
 
 steps:
-- name: build
+- name: install deps
   image: alpine
   commands:
   - apk update
   - apk add go nodejs npm gcc sqlite musl-dev
+
+steps:
+- name: build frontend
+  image: alpine
+  commands:
   - cd frontend
   - npm i
-  - npm build
+  - npm run build
   - cd ..
+  - CGO_ENABLED=1 go build -o fuu main.go
+
+steps:
+- name: build backend
+  image: alpine
+  commands:
   - CGO_ENABLED=1 go build -o fuu main.go
