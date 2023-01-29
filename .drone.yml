@@ -15,7 +15,7 @@ steps:
 - name: Deploy
   commands:
   - chmod +x ./fuu
-  - mv ./fuu /usr/local/bin
+  - mv ./fuu /usr/bin/fuu
   - systemctl restart fuu
 
 ---
