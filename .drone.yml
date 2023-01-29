@@ -13,5 +13,5 @@ steps:
   commands:
   - docker login -u $USERNAME -p $PASSWORD
   - docker buildx create --use
-  - docker buildx build --push --platform linux/amd64,linux/arm/v7 --tag "$DOCKER_HUB_USER/fuu:latest" .
+  - docker buildx build --push --platform linux/amd64,linux/arm/v7 --tag "$USERNAME/fuu:latest" .
   - echo "Pipeline completed!"
