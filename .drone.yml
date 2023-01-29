@@ -1,15 +1,12 @@
 kind: pipeline
 type: docker
-name: fuu integration pipeline
+name: Fuu CI/CD Pipeline
 
 steps:
-- name: build
-  image: alpine
+- name: Buildx and push to docker hub
+  image: jdrouet/docker-with-buildx:stable
   commands:
-  - apk update
-  - apk add go nodejs npm gcc sqlite musl-dev
-  - cd frontend
-  - npm i
-  - npm run build
-  - cd ..
-  - CGO_ENABLED=1 go build -o fuu main.go
+  - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
+  - docker buildx create --use
+  - docker buildx build --push --platform linux/amd64,linux/arm/v7 --tag "$DOCKER_HUB_USER/fuu:latest" .
+  - echo "Pipeline completed!"

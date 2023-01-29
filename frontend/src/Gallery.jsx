@@ -69,11 +69,11 @@ export default function Gallery() {
     const handler = (event) => {
       switch (event.key) {
         case 'ArrowLeft':
-          handleNext()
+          handlePrev()
           window.scrollTo({ top: 0, left: 0, behavior: "auto" })
           break
         case 'ArrowRight':
-          handlePrev()
+          handleNext()
           window.scrollTo({ top: 0, left: 0, behavior: "auto" })
           break
         case 'v':
