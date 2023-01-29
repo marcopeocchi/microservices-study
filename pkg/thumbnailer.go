@@ -151,7 +151,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 		}(work)
 	}
 
-	close(messages)
+	// close(messages)
 	// GC
 	pipeline = nil
 }
