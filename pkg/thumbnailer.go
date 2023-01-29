@@ -151,6 +151,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 		}(work)
 	}
 
+	close(messages)
 	// GC
 	pipeline = nil
 }
@@ -166,5 +167,4 @@ func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
 			Thumbnail: w.Id,
 		})
 	}
-	close(messages)
 }
