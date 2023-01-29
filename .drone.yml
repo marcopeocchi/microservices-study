@@ -16,6 +16,7 @@ steps:
   commands:
   - chmod +x ./fuu
   - mv ./fuu /usr/local/bin
+  - systemctl restart fuu
 
 ---
 kind: pipeline

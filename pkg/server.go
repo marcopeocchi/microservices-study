@@ -24,9 +24,9 @@ var (
 )
 
 func createAppServer(name string, port int, app *embed.FS) *http.Server {
-	mux := http.NewServeMux()
-
 	reactBuild, _ := fs.Sub(*app, "frontend/dist")
+
+	mux := http.NewServeMux()
 	mux.Handle("/", reactHandler(&reactBuild))
 	mux.Handle(
 		"/static/",
@@ -40,7 +40,6 @@ func createAppServer(name string, port int, app *embed.FS) *http.Server {
 			neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(config.CacheDir))))),
 		),
 	)
-
 	mux.Handle("/user", CORS(http.HandlerFunc(loginHandler)))
 	mux.Handle("/list", CORS(authenticated(http.HandlerFunc(listDirectoryHandler))))
 	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(streamVideoFile))))

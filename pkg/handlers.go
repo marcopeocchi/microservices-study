@@ -58,7 +58,7 @@ func listDirectoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Query().Get("fetchBy") == "date" {
 		sort.SliceStable(files, func(i, j int) bool {
-			return files[i].CreatedAt.After(files[j].CreatedAt)
+			return files[j].CreatedAt.After(files[i].CreatedAt)
 		})
 	}
 
