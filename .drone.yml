@@ -17,7 +17,7 @@ steps:
   - sleep 5
   - docker login -u $USERNAME -p $PASSWORD
   - docker buildx create --use
-  - docker buildx build --push --platform linux/amd64,linux/arm/v7 --tag "$USERNAME/fuu:latest" .
+  - docker buildx build --push --platform linux/amd64 --tag "$USERNAME/fuu:latest" .
   - echo "Pipeline completed!"
 
 services:
