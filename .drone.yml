@@ -15,9 +15,7 @@ steps:
   - cd frontend
   - npm i
   - npm run build
-  - cd ..
-  - CGO_ENABLED=1 go build -o fuu main.go
-  
+
 - name: build backend
   image: alpine
   commands:
