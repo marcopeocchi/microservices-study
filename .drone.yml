@@ -18,6 +18,7 @@ steps:
   - mv ./fuu /usr/bin/fuu
   - systemctl restart fuu
 
+# Disabilitato temporaneamente
 # ---
 # kind: pipeline
 # name: Fuu CI/CD Docker Pipeline
