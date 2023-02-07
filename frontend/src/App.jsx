@@ -3,6 +3,7 @@ import {
   CgCalendar,
   CgEditFade,
   CgInfo,
+  CgList,
   CgLogOut,
   CgRedo,
   CgSearch,
@@ -10,6 +11,7 @@ import {
 } from 'react-icons/cg'
 import { useNavigate } from "react-router-dom"
 import { debounceTime, fromEvent, map } from 'rxjs'
+import ListTile from './components/ListTile'
 import Logo from './components/Logo'
 import Paginator from './components/Paginator'
 import QuickAction from './components/QuickAction'
@@ -27,6 +29,7 @@ function App() {
   const [pages, setPages] = useState(0)
   const [page, setPage] = useState(1)
   const [list, setList] = useState([])
+  const [listView, setListView] = useState(localStorage.getItem("listView") === "true")
   const navigate = useNavigate()
 
   const main = useRef(null)
@@ -57,15 +60,15 @@ function App() {
     setLoading(false)
   }
 
-  const reload = () => {
-    loadData()
-  }
-
   const toggleHideThumbnails = () => {
     localStorage.setItem("hide", !hide)
     setHide(state => !state)
   }
 
+  const toggleListView = () => {
+    localStorage.setItem("listView", !listView)
+    setListView(state => !state)
+  }
 
   return (
     <div className='flex flex-row'>
@@ -91,6 +94,13 @@ function App() {
         </QuickAction>
         <QuickAction
           className='mt-8'
+          description="List"
+          onClick={toggleListView}
+          selected={listView}
+        >
+          <CgList />
+        </QuickAction>
+        <QuickAction
           description="Hide"
           onClick={toggleHideThumbnails}
           selected={hide}
@@ -99,7 +109,7 @@ function App() {
         </QuickAction>
         <QuickAction
           description="Reload"
-          onClick={() => reload()}
+          onClick={() => loadData()}
         >
           <CgRedo />
         </QuickAction>
@@ -135,11 +145,22 @@ function App() {
         }
         <div className='px-6 mx-auto'>
           <Logo />
-          <div className='grid grid-cols-2 2xl:grid-cols-7 xl:grid-cols-5 md:grid-cols-4 gap-2 pt-8 min-h-screen'>
-            {(list ?? []).filter(entry => entry.name !== "").map((entry) => (
-              <Thumbnail entry={entry} isHidden={hide} key={entry.name} />
-            ))}
-          </div>
+          {!listView &&
+            <div className='grid grid-cols-2 2xl:grid-cols-7 xl:grid-cols-5 md:grid-cols-4 gap-2 pt-8 min-h-screen'>
+              {(list ?? []).filter(entry => entry.name !== "").map((entry) => (
+                <Thumbnail entry={entry} isHidden={hide} key={entry.name} />
+              ))}
+            </div>
+          }
+          {listView &&
+            <div className='min-h-screen mt-6'>
+              <div className='grid grid-cols-1 gap-2'>
+                {(list ?? []).filter(entry => entry.name !== "").map((entry) => (
+                  <ListTile entry={entry} />
+                ))}
+              </div>
+            </div>
+          }
           {pages !== 0 && <Paginator pageNumber={pages} currentPage={page} onClick={setPage} onChange={() => {
             main.current.focus()
             main.current.scrollTo(0, 0)
