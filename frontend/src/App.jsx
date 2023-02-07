@@ -153,7 +153,7 @@ function App() {
             </div>
           }
           {listView &&
-            <div className='min-h-screen mt-6'>
+            <div className='min-h-screen my-6'>
               <div className='grid grid-cols-1 gap-2'>
                 {(list ?? []).filter(entry => entry.name !== "").map((entry) => (
                   <ListTile entry={entry} />
