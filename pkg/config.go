@@ -9,6 +9,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Config struct {
+	ServerSecret      string `yaml:"serverSecret"`
+	Masterpass        string `yaml:"masterpass"`
+	CacheDir          string `yaml:"cacheDir"`
+	WorkingDir        string `yaml:"workingDir"`
+	ForceRegeneration bool   `yaml:"regenerateThumbnailsOnBoot"`
+	ThumbnailHeight   int    `yaml:"thumbnailHeight"`
+	ThumbnailQuality  int    `yaml:"thumbnailQuality"`
+	Port              int    `yaml:"port"`
+}
+
 type ConfigReader struct{}
 
 func (c *ConfigReader) Load() Config {
@@ -38,11 +49,13 @@ func fallbackToEnv(config *Config) {
 	config.Masterpass = os.Getenv("MASTERPASS")
 	config.ServerSecret = os.Getenv("SECRET")
 	config.WorkingDir = os.Getenv("WORKDIR")
+
 	height, err := strconv.Atoi(os.Getenv("THUMBNAIL_HEIGHT"))
 	if err != nil {
 		height = 450
 	}
 	config.ThumbnailHeight = height
+
 	quality, err := strconv.Atoi(os.Getenv("THUMBNAIL_QUALITY"))
 	if err != nil {
 		quality = 75
@@ -54,6 +67,7 @@ func overrideWithArgs(config *Config) {
 	flag.StringVar(&config.Masterpass, "M", "adminadmin", "Main user password")
 	flag.StringVar(&config.ServerSecret, "S", "secret", "Signing secret")
 	flag.StringVar(&config.WorkingDir, "w", ".", "Pictures directory")
+
 	flag.IntVar(&config.ThumbnailHeight, "th", 450, "Thumbnails height (px)")
 	flag.IntVar(&config.ThumbnailQuality, "tq", 75, "Thumbnails quality (0-100]")
 	flag.IntVar(&config.Port, "p", 4456, "Where server will listen at")

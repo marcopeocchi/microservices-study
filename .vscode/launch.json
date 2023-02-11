@@ -12,7 +12,7 @@
       "program": "${fileDirname}",
       "env": {
         "GALLERY_DIR": "/Users/marco/Downloads/gallery"
-      }
+      },
     }
   ]
 }

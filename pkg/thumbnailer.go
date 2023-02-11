@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"fuu/v/pkg/models"
+	"fuu/v/pkg/domain"
 	"fuu/v/pkg/utils"
 
 	"github.com/google/uuid"
@@ -56,7 +56,7 @@ func (t *Thumbnailer) Start() {
 			}
 
 			if !t.ForceRegeneration {
-				var row models.Directory
+				var row domain.Directory
 				t.Database.First(&row, "path = ?", workingDir)
 
 				if row.Thumbnail != "" {
@@ -94,7 +94,7 @@ func (t *Thumbnailer) Start() {
 }
 
 func (t *Thumbnailer) Remove(dirpath string) {
-	t.Database.Where("path = ?", fmt.Sprintf("`%s`", dirpath)).Delete(&models.Directory{})
+	t.Database.Where("path = ?", fmt.Sprintf("`%s`", dirpath)).Delete(&domain.Directory{})
 	os.Remove(dirpath)
 }
 
@@ -161,7 +161,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 // A transaction setup to ensure the lock of the db.
 func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
 	for w := range messages {
-		t.Database.Create(&models.Directory{
+		t.Database.Create(&domain.Directory{
 			Name:      w.WorkingDirName,
 			Path:      w.WorkingDirPath,
 			Thumbnail: w.Id,

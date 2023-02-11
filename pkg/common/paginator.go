@@ -1,12 +1,6 @@
-package pkg
+package common
 
 import "math"
-
-type Paginator[T any] struct {
-	PageSize   int
-	Items      *[]T
-	TotalItems int64
-}
 
 type PaginatedResponse[T any] struct {
 	List          []T   `json:"list"`
@@ -14,6 +8,12 @@ type PaginatedResponse[T any] struct {
 	Pages         int   `json:"pages"`
 	PageSize      int   `json:"pageSize"`
 	TotalElements int64 `json:"totalElements"`
+}
+
+type Paginator[T any] struct {
+	PageSize   int
+	Items      *[]T
+	TotalItems int64
 }
 
 func (p *Paginator[T]) Get(page int) *PaginatedResponse[T] {

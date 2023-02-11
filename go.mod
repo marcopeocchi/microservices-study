@@ -12,6 +12,7 @@ require (
 require (
 	github.com/goccy/go-json v0.10.0
 	github.com/google/uuid v1.3.0
+	github.com/google/wire v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3

@@ -5,7 +5,8 @@ import (
 	"embed"
 	"fmt"
 	"fuu/v/pkg/cli"
-	"fuu/v/pkg/models"
+	"fuu/v/pkg/domain"
+	"fuu/v/pkg/listing"
 	"io/fs"
 	"log"
 	"net/http"
@@ -18,22 +19,23 @@ import (
 )
 
 var (
-	appContext = context.Background()
-	config     Config
-	db         *gorm.DB
+	config Config
+	db     *gorm.DB
 )
 
-func createAppServer(name string, port int, app *embed.FS) *http.Server {
+func createAppServer(ctx context.Context, port int, app *embed.FS) *http.Server {
 	reactBuild, _ := fs.Sub(*app, "frontend/dist")
 
 	mux := http.NewServeMux()
 	mux.Handle("/", reactHandler(&reactBuild))
+
 	mux.Handle(
 		"/static/",
 		http.StripPrefix("/static",
 			neuter(authenticated(http.FileServer(http.Dir(config.WorkingDir)))),
 		),
 	)
+
 	mux.Handle(
 		"/thumbnails/",
 		http.StripPrefix("/thumbnails",
@@ -41,24 +43,21 @@ func createAppServer(name string, port int, app *embed.FS) *http.Server {
 		),
 	)
 	mux.Handle("/user", CORS(http.HandlerFunc(loginHandler)))
-	mux.Handle("/list", CORS(authenticated(http.HandlerFunc(listDirectoryHandler))))
+
+	mux.Handle("/list", CORS(authenticated(listing.Wire(db).ListAllDirectories())))
 	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(streamVideoFile))))
 	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(listDirectoryContentHandler))))
 
-	server := http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
+	return &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: mux,
 	}
-
-	return &server
 }
 
-func RunBlocking(ctx context.Context) {
-	appContext = ctx
-	config = ctx.Value("config").(Config)
-	db = ctx.Value("db").(*gorm.DB)
-
-	db.AutoMigrate(&models.Directory{})
+func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
+	config = cfg
+	db = localdb
+	db.AutoMigrate(&domain.Directory{})
 
 	thumbnailer := Thumbnailer{
 		BaseDir:           config.WorkingDir,
@@ -82,6 +81,10 @@ func RunBlocking(ctx context.Context) {
 		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
 	}
 
+	type ctxKey string
+	serverContext := context.Background()
+	serverContext = context.WithValue(serverContext, ctxKey("config"), config)
+
 	go func() {
 		log.Println("Starting thumbnailer")
 		start := time.Now()
@@ -90,7 +93,7 @@ func RunBlocking(ctx context.Context) {
 		wg.Done()
 	}()
 	go func() {
-		server := createAppServer("app", config.Port, ctx.Value("react").(*embed.FS))
+		server := createAppServer(serverContext, config.Port, frontend)
 		server.ListenAndServe()
 		wg.Done()
 	}()

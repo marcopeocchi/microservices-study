@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fuu/v/pkg"
 	"log"
@@ -14,8 +13,6 @@ import (
 
 //go:embed frontend/dist
 var reactApp embed.FS
-
-type ContextKey interface{}
 
 func main() {
 	r := pkg.ConfigReader{}
@@ -44,11 +41,5 @@ func main() {
 		log.Panicln(err)
 	}
 
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, ContextKey("config"), cfg)
-	ctx = context.WithValue(ctx, ContextKey("secret"), os.Getenv("SECRET"))
-	ctx = context.WithValue(ctx, ContextKey("react"), &reactApp)
-	ctx = context.WithValue(ctx, ContextKey("db"), db)
-
-	pkg.RunBlocking(ctx)
+	pkg.RunBlocking(cfg, db, &reactApp)
 }
