@@ -66,6 +66,7 @@ func listDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
 	res = nil
 }
 
+// possibily dead code
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
