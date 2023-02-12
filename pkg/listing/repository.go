@@ -43,7 +43,7 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 
 func (r *Repository) FindAllRange(ctx context.Context, take, skip int) (*[]domain.Directory, error) {
 	_range := new([]domain.Directory)
-	r.DB.Limit(take).Offset(skip).Find(_range)
+	r.DB.Order("name").Limit(take).Offset(skip).Find(_range)
 	return _range, nil
 }
 
