@@ -4,6 +4,9 @@ type: exec
 name: Fuu Local deploy
 
 steps:
+- name: Prepare Build Environment
+  commands:
+  - /usr/local/go/bin/go install github.com/google/wire/cmd/wire@latest
 - name: Transpile frontend
   commands:
   - cd frontend
@@ -11,10 +14,7 @@ steps:
   - pnpm build
 - name: Compile backend
   commands:
-  - export PATH=$PATH:/usr/local/go/bin
-  - export PATH=$PATH:$HOME/go/bin
-  - wire ./pkg/...
-  - CGO_ENABLED=1 go build -o fuu main.go
+  - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu main.go
 - name: Deploy
   commands:
   - chmod +x ./fuu
