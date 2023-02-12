@@ -220,6 +220,7 @@ export default function Gallery() {
               onClick={handleMobileTap}
               onImageLoad={imgLoaded}
               onVideoLoad={videoLoaded}
+              onEnded={handleNext}
               fullscreen={fullscreen}
               loading={loading}
               src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex)}`}

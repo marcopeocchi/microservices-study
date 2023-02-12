@@ -7,8 +7,9 @@ export default function MediaPlayer({
   onClick,
   onImageLoad,
   onVideoLoad,
+  onEnded,
   fullscreen,
-  loading
+  loading,
 }) {
   const [isVideo, setIsVideo] = useState(true)
 
@@ -33,6 +34,7 @@ export default function MediaPlayer({
         style={{ userSelect: "none" }}
         onClick={onClick}
         onPlay={onVideoLoad}
+        onEnded={onEnded}
       /> :
       <img
         src={src}
