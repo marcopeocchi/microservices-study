@@ -63,10 +63,11 @@ func (s *Service) ListAllDirectoriesLike(name string) (*[]domain.DirectoryEnt, e
 
 	for i, dir := range *dirs {
 		previews[i] = domain.DirectoryEnt{
-			Id:        dir.ID,
-			Name:      dir.Name,
-			Loved:     dir.Loved,
-			Thumbnail: dir.Thumbnail,
+			Id:           dir.ID,
+			Name:         dir.Name,
+			Loved:        dir.Loved,
+			Thumbnail:    dir.Thumbnail,
+			LastModified: dir.CreatedAt,
 		}
 	}
 

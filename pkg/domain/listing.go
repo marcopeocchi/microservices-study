@@ -9,18 +9,16 @@ import (
 )
 
 type DirectoryEnt struct {
-	Id        uint   `json:"id"`
-	Name      string `json:"name"`
-	Loved     bool   `json:"loved"`
-	Thumbnail string `json:"thumbnail"`
+	Id           uint      `json:"id"`
+	Name         string    `json:"name"`
+	Loved        bool      `json:"loved"`
+	Thumbnail    string    `json:"thumbnail"`
+	LastModified time.Time `json:"lastModified"`
 }
 
 type Directory struct {
-	ID        uint
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-	Path      string         `gorm:"primaryKey;autoIncrement:false"`
+	gorm.Model
+	Path      string `gorm:"unique;not null"`
 	Name      string
 	Loved     bool
 	Thumbnail string

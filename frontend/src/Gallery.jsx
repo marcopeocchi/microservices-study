@@ -197,8 +197,25 @@ export default function Gallery() {
         </div>
       </footer>
       <div className="flex justify-center items-center">
-        {galleryData.length ?
+        {galleryData.length &&
           !splitView ?
+          <MediaPlayer
+            onClick={handleMobileTap}
+            onImageLoad={imgLoaded}
+            onVideoLoad={videoLoaded}
+            fullscreen={fullscreen}
+            loading={loading}
+            src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex)}`}
+          /> :
+          <Fragment>
+            <MediaPlayer
+              onClick={handleMobileTap}
+              onImageLoad={imgLoaded}
+              onVideoLoad={videoLoaded}
+              fullscreen={fullscreen}
+              loading={loading}
+              src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex + 1)}`}
+            />
             <MediaPlayer
               onClick={handleMobileTap}
               onImageLoad={imgLoaded}
@@ -206,33 +223,14 @@ export default function Gallery() {
               fullscreen={fullscreen}
               loading={loading}
               src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex)}`}
-            /> :
-            <Fragment>
-              <MediaPlayer
-                onClick={handleMobileTap}
-                onImageLoad={imgLoaded}
-                onVideoLoad={videoLoaded}
-                fullscreen={fullscreen}
-                loading={loading}
-                src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex + 1)}`}
-              />
-              <MediaPlayer
-                onClick={handleMobileTap}
-                onImageLoad={imgLoaded}
-                onVideoLoad={videoLoaded}
-                fullscreen={fullscreen}
-                loading={loading}
-                src={`${getHostStatic()}/${galleryTitle}/${galleryData.at(currentIndex)}`}
-              />
-            </Fragment>
-          : null
+            />
+          </Fragment>
         }
       </div>
-      {loading ?
+      {loading &&
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <Spinner />
-        </div> :
-        null
+        </div>
       }
     </main>
   )

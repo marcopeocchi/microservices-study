@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"fuu/v/pkg/cli"
@@ -18,30 +17,16 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	config Config
-	db     *gorm.DB
-)
+var config Config
 
-func createAppServer(ctx context.Context, port int, app *embed.FS) *http.Server {
+func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	reactBuild, _ := fs.Sub(*app, "frontend/dist")
 
 	mux := http.NewServeMux()
 	mux.Handle("/", reactHandler(&reactBuild))
 
-	mux.Handle(
-		"/static/",
-		http.StripPrefix("/static",
-			neuter(authenticated(http.FileServer(http.Dir(config.WorkingDir)))),
-		),
-	)
-
-	mux.Handle(
-		"/thumbnails/",
-		http.StripPrefix("/thumbnails",
-			neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(config.CacheDir))))),
-		),
-	)
+	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(config.WorkingDir))))))
+	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(config.CacheDir)))))))
 	mux.Handle("/user", CORS(http.HandlerFunc(loginHandler)))
 
 	mux.Handle("/list", CORS(authenticated(listing.Wire(db).ListAllDirectories())))
@@ -56,8 +41,7 @@ func createAppServer(ctx context.Context, port int, app *embed.FS) *http.Server 
 
 func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
 	config = cfg
-	db = localdb
-	db.AutoMigrate(&domain.Directory{})
+	localdb.AutoMigrate(&domain.Directory{})
 
 	thumbnailer := Thumbnailer{
 		BaseDir:           config.WorkingDir,
@@ -65,7 +49,7 @@ func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
 		ImgQuality:        config.ThumbnailQuality,
 		ForceRegeneration: config.ForceRegeneration,
 		CacheDir:          config.CacheDir,
-		Database:          db,
+		Database:          localdb,
 	}
 
 	log.Println("Starting server")
@@ -81,10 +65,6 @@ func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
 		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
 	}
 
-	type ctxKey string
-	serverContext := context.Background()
-	serverContext = context.WithValue(serverContext, ctxKey("config"), config)
-
 	go func() {
 		log.Println("Starting thumbnailer")
 		start := time.Now()
@@ -93,7 +73,7 @@ func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
 		wg.Done()
 	}()
 	go func() {
-		server := createAppServer(serverContext, config.Port, frontend)
+		server := createAppServer(config.Port, frontend, localdb)
 		server.ListenAndServe()
 		wg.Done()
 	}()

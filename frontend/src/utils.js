@@ -6,7 +6,7 @@ export const getHost = () => {
 }
 
 export const getHostStatic = () => `${getHost()}/static`
-export const getHostThumbnails = () => `${getHost()}/thumbnails`
+export const getHostThumbnails = () => `${getHost()}/thumbs`
 
 export const isOrderedByDate = () => localStorage.getItem("fetch-mode") === "date"
 export const isOrderedByName = () => localStorage.getItem("fetch-mode") === "name"
