@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
 	"net/http"
 	"time"
@@ -46,7 +47,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			Name:     "jwt_token",
 			HttpOnly: true,
 			Path:     "/",
-			Expires:  time.Now().Add(time.Minute * 10),
+			Expires:  common.TOKEN_EXPIRE_TIME,
 			Value:    *token,
 		}
 		http.SetCookie(w, &cookie)
