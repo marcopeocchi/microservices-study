@@ -3,27 +3,30 @@ package main
 import (
 	"embed"
 	"fuu/v/pkg"
+	"fuu/v/pkg/common"
+	"fuu/v/pkg/domain"
 	"log"
 	"os"
 	"path/filepath"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 //go:embed frontend/dist
 var reactApp embed.FS
+var reader pkg.ConfigReader
 
 func main() {
-	r := pkg.ConfigReader{}
-	cfg := r.Load()
+	cfg := reader.Load()
 
 	var cacheDir string
 	homeDir, err := os.UserHomeDir()
 
 	if err == nil {
 		cacheDir = filepath.Join(homeDir, ".cache", "fuu")
-		os.MkdirAll(filepath.Join(cacheDir), os.ModePerm)
+		os.MkdirAll(cacheDir, os.ModePerm)
 	} else {
 		cacheDir = "/cache"
 		_, err := os.Stat(cacheDir)
@@ -33,13 +36,29 @@ func main() {
 	}
 
 	cfg.CacheDir = cacheDir
-
-	dbPath := filepath.Join(cacheDir, "fuu_thumbs.db")
+	dbPath := filepath.Join(cfg.CacheDir, "fuu.db")
 
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		log.Panicln(err)
 	}
 
+	initDatabase(db)
 	pkg.RunBlocking(cfg, db, &reactApp)
+}
+
+func initDatabase(db *gorm.DB) {
+	db.AutoMigrate(&domain.Directory{})
+	db.AutoMigrate(&domain.User{})
+
+	p, err := bcrypt.GenerateFromPassword([]byte(reader.Load().Masterpass), common.BCRYPT_ROUNDS)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	db.Create(&domain.User{
+		Username: "admin",
+		Password: string(p),
+		Role:     int(domain.Admin),
+	})
 }

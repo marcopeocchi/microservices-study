@@ -4,8 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"fuu/v/pkg/cli"
-	"fuu/v/pkg/domain"
 	"fuu/v/pkg/listing"
+	"fuu/v/pkg/user"
 	"io/fs"
 	"log"
 	"net/http"
@@ -27,11 +27,13 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(config.WorkingDir))))))
 	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(config.CacheDir)))))))
-	mux.Handle("/user", CORS(http.HandlerFunc(loginHandler)))
 
 	mux.Handle("/list", CORS(authenticated(listing.Wire(db).ListAllDirectories())))
 	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(streamVideoFile))))
 	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(listDirectoryContentHandler))))
+
+	mux.Handle("/user/login", CORS(user.Wire(db).Login()))
+	mux.Handle("/user/logout", CORS(user.Wire(db).Logout()))
 
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -41,7 +43,6 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 
 func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
 	config = cfg
-	localdb.AutoMigrate(&domain.Directory{})
 
 	thumbnailer := Thumbnailer{
 		BaseDir:           config.WorkingDir,

@@ -24,7 +24,7 @@ type UserEnt struct {
 type User struct {
 	gorm.Model
 	ID       uint
-	Username string
+	Username string `gorm:"unique;not null"`
 	Password string
 	Role     int
 }
@@ -32,21 +32,19 @@ type User struct {
 type UserRepository interface {
 	FindById(ctx context.Context, id uint) (User, error)
 
-	FindManyById(ctx context.Context, id uint) (*[]User, error)
-
 	FindByUsername(ctx context.Context, username string) (User, error)
 
 	Create(ctx context.Context, username, password string, role int) (User, error)
 
-	Update(ctx context.Context, username, password string, role int) (User, error)
+	Update(ctx context.Context, id uint, username, password string, role int) (User, error)
 
 	Delete(ctx context.Context, id uint) (User, error)
 }
 
 type UserService interface {
-	FindById(id uint) (User, error)
+	Login(ctx context.Context, username, password string) (*string, error)
 
-	FindByUsername(username string) (User, error)
+	Create(ctx context.Context, username, password string, role int) (User, error)
 }
 
 type UserHandler interface {

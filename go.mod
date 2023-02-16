@@ -6,13 +6,15 @@ require github.com/marcopeocchi/fazzoletti v0.0.0-20221114144444-1e802380a7db //
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // direct
-	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 )
 
 require (
 	github.com/goccy/go-json v0.10.0
+	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
+	golang.org/x/crypto v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3

@@ -9,7 +9,7 @@ export default function Login() {
   const login = useLogin()
 
   const performLogin = async () => {
-    await login(password)
+    await login('admin', password)
     navigate('/')
   }
 

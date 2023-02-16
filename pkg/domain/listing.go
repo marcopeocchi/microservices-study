@@ -43,13 +43,13 @@ type ListingRepository interface {
 }
 
 type ListingService interface {
-	CountDirectories() (int64, error)
+	CountDirectories(ctx context.Context) (int64, error)
 
-	ListAllDirectories() (*[]DirectoryEnt, error)
+	ListAllDirectories(ctx context.Context) (*[]DirectoryEnt, error)
 
-	ListAllDirectoriesLike(name string) (*[]DirectoryEnt, error)
+	ListAllDirectoriesLike(ctx context.Context, name string) (*[]DirectoryEnt, error)
 
-	ListAllDirectoriesRange(take, skip int) (*[]DirectoryEnt, error)
+	ListAllDirectoriesRange(ctx context.Context, take, skip int) (*[]DirectoryEnt, error)
 }
 
 type ListingHandler interface {

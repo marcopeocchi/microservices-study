@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+// ********************************
+// LEGACY HMAC BASED AUTHENTCATION
+// IT WILL BE REMOVED
+// ********************************
+
 // Returns a Base64 encoded HMAC of a messagege given a secret
 func computeHMAC(data, secret []byte) string {
 	h := hmac.New(sha256.New, secret)

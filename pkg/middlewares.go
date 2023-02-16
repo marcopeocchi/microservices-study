@@ -10,6 +10,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Middleware for applying CORS policy for ALL hosts and for
@@ -101,29 +104,40 @@ func authenticated(next http.Handler) http.Handler {
 			return
 		}
 
-		cookie, err := r.Cookie("fuutoken")
+		cookie, err := r.Cookie("jwt_token")
+
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
 
 		if cookie == nil {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 
-		if err != nil {
-			log.Println(3)
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-			return
-		}
+		token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return []byte(os.Getenv("JWTSECRET")), nil
+		})
 
-		validToken, err := ValidateToken2String(
-			cookie.Value,
-			[]byte(config.Masterpass),
-			[]byte(config.ServerSecret),
-		)
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			expiresAt, err := time.Parse(time.RFC3339, claims["expiresAt"].(string))
 
-		if !validToken || err != nil {
-			log.Println(err)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if time.Now().After(expiresAt) {
+				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+				return
+			}
+		} else {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-			return
+			log.Println(err.Error())
 		}
 
 		next.ServeHTTP(w, r)

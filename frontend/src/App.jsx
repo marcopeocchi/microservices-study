@@ -18,6 +18,7 @@ import QuickAction from './components/QuickAction'
 import { SearchModal } from './components/SearchModal'
 import Spinner from './components/Spinner'
 import Thumbnail from './components/Thumbnail'
+import { useLogout } from './hooks/useLogout'
 import { getHost, isOrderedByDate, isOrderedByName } from './utils'
 
 function App() {
@@ -30,7 +31,9 @@ function App() {
   const [page, setPage] = useState(1)
   const [list, setList] = useState([])
   const [listView, setListView] = useState(localStorage.getItem("listView") === "true")
+
   const navigate = useNavigate()
+  const logout = useLogout()
 
   const main = useRef(null)
   const search = useRef(null)
@@ -129,7 +132,10 @@ function App() {
         </QuickAction>
         <QuickAction
           description="Logout"
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            logout()
+            navigate('/login')
+          }}
         >
           <CgLogOut />
         </QuickAction>

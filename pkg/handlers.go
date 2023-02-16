@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"encoding/base64"
-	"time"
 
 	"io/fs"
 	"log"
@@ -64,44 +63,6 @@ func listDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// GC
 	res = nil
-}
-
-// possibily dead code
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	req := LoginRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	token, _ := GenerateToken2String(
-		[]byte(req.Password),
-		[]byte(config.ServerSecret),
-	)
-
-	if req.Password == config.Masterpass {
-		cookie := http.Cookie{
-			Name:     "fuutoken",
-			HttpOnly: true,
-			Path:     "/",
-			Expires:  time.Now().Add(time.Hour * 24 * 30),
-			Value:    token,
-		}
-		http.SetCookie(w, &cookie)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	w.WriteHeader(http.StatusUnauthorized)
 }
 
 func streamVideoFile(w http.ResponseWriter, r *http.Request) {
