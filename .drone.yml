@@ -15,43 +15,51 @@ steps:
 - name: Compile backend
   commands:
   - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu main.go
-- name: Deploy
+- name: Deploy testing
+  commands:
+  - chmod +x ./fuu
+  - mv ./fuu /usr/bin/fuu
+  - systemctl restart fuu
+- name: Deploy production
   commands:
   - chmod +x ./fuu
   - mv ./fuu /usr/bin/fuu
   - systemctl restart fuu
 
-# Disabilitato temporaneamente
-# ---
-# kind: pipeline
-# name: Fuu CI/CD Docker Pipeline
+# Production build to docker hub
+---
+kind: pipeline
+name: Fuu CI/CD Docker Pipeline
+steps:
+- name: Buildx and push to docker hub
+  image: jdrouet/docker-with-buildx:stable
+  volumes:
+  - name: dockersock
+    path: /var/run
+  environment:
+    USERNAME:
+      from_secret: DOCKER_HUB_USER
+    PASSWORD:
+      from_secret: DOCKER_HUB_PASS
+  commands:
+  - sleep 60
+  - docker login -u $USERNAME -p $PASSWORD
+  - docker buildx create --use
+  - docker buildx build --push --platform linux/amd64 --tag "$USERNAME/fuu:latest" .
+  - echo "Pipeline completed!"
+services:
+- name: docker
+  image: docker:dind
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+volumes:
+- name: dockersock
+  temp: {}
 
-# steps:
-# - name: Buildx and push to docker hub
-#   image: jdrouet/docker-with-buildx:stable
-#   volumes:
-#   - name: dockersock
-#     path: /var/run
-#   environment:
-#     USERNAME:
-#       from_secret: DOCKER_HUB_USER
-#     PASSWORD:
-#       from_secret: DOCKER_HUB_PASS
-#   commands:
-#   - sleep 60
-#   - docker login -u $USERNAME -p $PASSWORD
-#   - docker buildx create --use
-#   - docker buildx build --push --platform linux/amd64 --tag "$USERNAME/fuu:latest" .
-#   - echo "Pipeline completed!"
-
-# services:
-# - name: docker
-#   image: docker:dind
-#   privileged: true
-#   volumes:
-#   - name: dockersock
-#     path: /var/run
-
-# volumes:
-# - name: dockersock
-#   temp: {}
+trigger:
+  event:
+  - promote
+  target:
+  - production

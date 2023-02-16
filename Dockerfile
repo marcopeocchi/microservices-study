@@ -22,7 +22,7 @@ RUN apk update && \
     apk add sqlite imagemagick ffmpeg
 
 ENV MASTERPASS=adminadminadmin
-ENV SECRET=secret
+ENV JWTSECRET=secret
 ENV THUMBNAIL_HEIGHT=450
 ENV THUMBNAIL_QUALITY=75
 
