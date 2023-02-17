@@ -1,4 +1,4 @@
-package pkg
+package static
 
 import (
 	"encoding/base64"
@@ -12,19 +12,27 @@ import (
 	"sort"
 	"strings"
 
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/utils"
 
 	"github.com/goccy/go-json"
 	"github.com/marcopeocchi/fazzoletti/slices"
 )
 
-func listDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
+// Generic response for directory listing operations
+type Response struct {
+	List []string `json:"list"`
+}
+
+func ListDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
 
+	wd := config.Instance().WorkingDir
+
 	dir := r.URL.Query().Get("dir")
-	files, _ := os.ReadDir(filepath.Join(config.WorkingDir, dir))
+	files, _ := os.ReadDir(filepath.Join(wd, dir))
 
 	files = slices.Filter(files, func(file fs.DirEntry) bool {
 		mimeType := mime.TypeByExtension(filepath.Ext(file.Name()))
@@ -51,7 +59,7 @@ func listDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
 		return idx1 < idx2
 	})
 
-	body, err := json.Marshal(Response[DirectortyList]{
+	body, err := json.Marshal(Response{
 		List: res,
 	})
 
@@ -65,7 +73,7 @@ func listDirectoryContentHandler(w http.ResponseWriter, r *http.Request) {
 	res = nil
 }
 
-func streamVideoFile(w http.ResponseWriter, r *http.Request) {
+func StreamVideoFile(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	path := r.URL.Query().Get("path")
 	pathBytes, err := base64.URLEncoding.DecodeString(path)
@@ -77,8 +85,7 @@ func streamVideoFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !strings.HasPrefix(path, config.WorkingDir) {
-		log.Println(config.WorkingDir)
+	if !strings.HasPrefix(path, config.Instance().WorkingDir) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

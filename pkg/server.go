@@ -4,7 +4,9 @@ import (
 	"embed"
 	"fmt"
 	"fuu/v/pkg/cli"
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/listing"
+	"fuu/v/pkg/static"
 	"fuu/v/pkg/user"
 	"fuu/v/pkg/workers"
 	"io/fs"
@@ -17,22 +19,21 @@ import (
 	"gorm.io/gorm"
 )
 
-var config Config
+var cfg = config.Instance()
 
-func RunBlocking(cfg Config, db *gorm.DB, frontend *embed.FS) {
-	config = cfg
+func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 
 	thumbnailer := workers.Thumbnailer{
-		BaseDir:           config.WorkingDir,
-		ImgHeight:         config.ThumbnailHeight,
-		ImgQuality:        config.ThumbnailQuality,
-		ForceRegeneration: config.ForceRegeneration,
-		CacheDir:          config.CacheDir,
+		BaseDir:           cfg.WorkingDir,
+		ImgHeight:         cfg.ThumbnailHeight,
+		ImgQuality:        cfg.ThumbnailQuality,
+		ForceRegeneration: cfg.ForceRegeneration,
+		CacheDir:          cfg.CacheDir,
 		Database:          db,
 	}
 
 	fileWatcher := workers.FileWatcher{
-		WorkingDir: config.WorkingDir,
+		WorkingDir: cfg.WorkingDir,
 	}
 	fileWatcher.New()
 
@@ -53,7 +54,7 @@ func RunBlocking(cfg Config, db *gorm.DB, frontend *embed.FS) {
 
 	// HTTP Server
 	go func() {
-		server := createAppServer(config.Port, frontend, db)
+		server := createAppServer(cfg.Port, frontend, db)
 		server.ListenAndServe()
 		wg.Done()
 	}()
@@ -96,12 +97,12 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/", reactHandler(&reactBuild))
 
-	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(config.WorkingDir))))))
-	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(config.CacheDir)))))))
+	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(cfg.WorkingDir))))))
+	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(cfg.CacheDir)))))))
 
 	mux.Handle("/list", CORS(authenticated(listing.Wire(db).ListAllDirectories())))
-	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(streamVideoFile))))
-	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(listDirectoryContentHandler))))
+	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(static.StreamVideoFile))))
+	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(static.ListDirectoryContentHandler))))
 
 	mux.Handle("/user/login", CORS(user.Wire(db).Login()))
 	mux.Handle("/user/logout", CORS(user.Wire(db).Logout()))

@@ -5,8 +5,14 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	instance *Config
+	lock     = &sync.Mutex{}
 )
 
 type Config struct {
@@ -20,9 +26,7 @@ type Config struct {
 	Port              int    `yaml:"port"`
 }
 
-type ConfigReader struct{}
-
-func (c *ConfigReader) Load() Config {
+func load() *Config {
 	configFile, err := os.ReadFile("./Fuufile")
 
 	if err != nil {
@@ -36,13 +40,13 @@ func (c *ConfigReader) Load() Config {
 
 	if err == nil {
 		yaml.Unmarshal(configFile, &config)
-		return config
+		return &config
 	}
 
 	// If nothing is provided fallback to Env variables values
 	fallbackToEnv(&config)
 	overrideWithArgs(&config)
-	return config
+	return &config
 }
 
 func fallbackToEnv(config *Config) {
@@ -73,4 +77,15 @@ func overrideWithArgs(config *Config) {
 	flag.IntVar(&config.Port, "p", 4456, "Where server will listen at")
 
 	flag.Parse()
+}
+
+func Instance() *Config {
+	if instance == nil {
+		lock.Lock()
+		defer lock.Unlock()
+		if instance == nil {
+			instance = load()
+		}
+	}
+	return instance
 }

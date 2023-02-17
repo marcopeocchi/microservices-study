@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fuu/v/pkg"
 	"fuu/v/pkg/common"
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
 	"log"
 	"os"
@@ -16,10 +17,9 @@ import (
 
 //go:embed frontend/dist
 var reactApp embed.FS
-var reader pkg.ConfigReader
 
 func main() {
-	cfg := reader.Load()
+	cfg := config.Instance()
 
 	var cacheDir string
 	homeDir, err := os.UserHomeDir()
@@ -44,14 +44,17 @@ func main() {
 	}
 
 	initDatabase(db)
-	pkg.RunBlocking(cfg, db, &reactApp)
+	pkg.RunBlocking(db, &reactApp)
 }
 
 func initDatabase(db *gorm.DB) {
 	db.AutoMigrate(&domain.Directory{})
 	db.AutoMigrate(&domain.User{})
 
-	p, err := bcrypt.GenerateFromPassword([]byte(reader.Load().Masterpass), common.BCRYPT_ROUNDS)
+	p, err := bcrypt.GenerateFromPassword(
+		[]byte(config.Instance().Masterpass),
+		common.BCRYPT_ROUNDS,
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
