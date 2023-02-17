@@ -6,6 +6,7 @@ import (
 	"fuu/v/pkg/cli"
 	"fuu/v/pkg/listing"
 	"fuu/v/pkg/user"
+	"fuu/v/pkg/workers"
 	"io/fs"
 	"log"
 	"net/http"
@@ -13,11 +14,81 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"gorm.io/gorm"
 )
 
 var config Config
+
+func RunBlocking(cfg Config, db *gorm.DB, frontend *embed.FS) {
+	config = cfg
+
+	thumbnailer := workers.Thumbnailer{
+		BaseDir:           config.WorkingDir,
+		ImgHeight:         config.ThumbnailHeight,
+		ImgQuality:        config.ThumbnailQuality,
+		ForceRegeneration: config.ForceRegeneration,
+		CacheDir:          config.CacheDir,
+		Database:          db,
+	}
+
+	fileWatcher := workers.FileWatcher{
+		WorkingDir: config.WorkingDir,
+	}
+	fileWatcher.New()
+
+	log.Println("Starting server")
+
+	wg := new(sync.WaitGroup)
+	wg.Add(3)
+
+	// Discourage the execution of this program as SuperUser.
+	// Unless in executed docker because of obvious reasons.
+	uid := os.Getuid()
+	if uid == 0 {
+		log.Println(cli.Yellow, "You're running this program as root (UID 0)", cli.Reset)
+		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
+	}
+
+	// ********** MAIN COMPONENTS GOROUTINES **********
+
+	// HTTP Server
+	go func() {
+		server := createAppServer(config.Port, frontend, db)
+		server.ListenAndServe()
+		wg.Done()
+	}()
+
+	// Thumbnailer worker
+	go func() {
+		log.Println("Starting thumbnailer")
+
+		start := time.Now()
+		thumbnailer.Start()
+		stop := time.Since(start)
+
+		log.Println("Thumbnailer took", cli.Format(stop, cli.BgBlue))
+		wg.Done()
+	}()
+
+	// Ionotify filewatcher worker
+	go func() {
+		defer func() {
+			fileWatcher.Close()
+			wg.Done()
+		}()
+
+		fileWatcher.Start(
+			func(event string) { thumbnailer.Start() },
+			func(event string) { thumbnailer.Remove(event) },
+		)
+	}()
+
+	log.Println("Server started")
+
+	// wait for the waitgroup to finish, which it will not.
+	// effectively blocks.
+	wg.Wait()
+}
 
 func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	reactBuild, _ := fs.Sub(*app, "frontend/dist")
@@ -39,85 +110,4 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: mux,
 	}
-}
-
-func RunBlocking(cfg Config, localdb *gorm.DB, frontend *embed.FS) {
-	config = cfg
-
-	thumbnailer := Thumbnailer{
-		BaseDir:           config.WorkingDir,
-		ImgHeight:         config.ThumbnailHeight,
-		ImgQuality:        config.ThumbnailQuality,
-		ForceRegeneration: config.ForceRegeneration,
-		CacheDir:          config.CacheDir,
-		Database:          localdb,
-	}
-
-	log.Println("Starting server")
-
-	wg := new(sync.WaitGroup)
-	wg.Add(2)
-
-	// Discourage the execution of this program as SuperUser.
-	// Unless in executed docker because of obvious reasons.
-	uid := os.Getuid()
-	if uid == 0 {
-		log.Println(cli.Yellow, "You're running this program as root (UID 0)", cli.Reset)
-		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
-	}
-
-	go func() {
-		log.Println("Starting thumbnailer")
-		start := time.Now()
-		thumbnailer.Start()
-		log.Println("Thumbnailer took", cli.Format(time.Since(start), cli.BgBlue))
-		wg.Done()
-	}()
-	go func() {
-		server := createAppServer(config.Port, frontend, localdb)
-		server.ListenAndServe()
-		wg.Done()
-	}()
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer watcher.Close()
-
-	// Start a light NON-Recursive Filesystem watcher as a background routine.
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Has(fsnotify.Create) {
-					log.Println("Added directory:", event.Name)
-					thumbnailer.Start()
-				}
-				if event.Has(fsnotify.Remove) {
-					log.Println("Removing directory:", event.Name)
-					thumbnailer.Remove(event.Name)
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
-			}
-		}
-	}()
-
-	err = watcher.Add(config.WorkingDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Server started")
-
-	// wait for the waitgroup to finish, which it will not.
-	// effectively blocks.
-	wg.Wait()
 }
