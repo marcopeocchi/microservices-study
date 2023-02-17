@@ -43,6 +43,15 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 			}
 		}
 
+		var orderBy int
+		fetchBy := r.URL.Query().Get("fetchBy")
+
+		if fetchBy == "date" {
+			orderBy = domain.OrderByDate
+		} else {
+			orderBy = domain.OrderByName
+		}
+
 		filterBy := r.URL.Query().Get("filter")
 
 		dirs := new([]domain.DirectoryEnt)
@@ -50,27 +59,19 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 		if filterBy != "" {
 			dirs, err = h.service.ListAllDirectoriesLike(ctx, filterBy)
 		} else {
-			dirs, err = h.service.ListAllDirectoriesRange(ctx, pageSize, (page-1)*pageSize)
+			dirs, err = h.service.ListAllDirectoriesRange(ctx, pageSize, (page-1)*pageSize, orderBy)
 		}
 
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		count, err := h.service.CountDirectories(ctx)
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		/*
-			if r.URL.Query().Get("fetchBy") == "date" {
-				sort.SliceStable(files, func(i, j int) bool {
-					return files[i].CreatedAt.After(files[j].CreatedAt)
-				})
-			}
-		*/
 
 		paginator := common.Paginator[domain.DirectoryEnt]{
 			Items:      dirs,
@@ -81,8 +82,7 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 		body, err := json.Marshal(paginator.Get(page))
 
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 

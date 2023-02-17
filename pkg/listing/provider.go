@@ -38,7 +38,7 @@ func ProvideHandler(service domain.ListingService) *Handler {
 func ProvideService(repository domain.ListingRepository) *Service {
 	serviceOnce.Do(func() {
 		service = &Service{
-			Repo: repository,
+			repo: repository,
 		}
 	})
 
@@ -48,7 +48,7 @@ func ProvideService(repository domain.ListingRepository) *Service {
 func ProvideRepository(db *gorm.DB) *Repository {
 	repositoryOnce.Do(func() {
 		repository = &Repository{
-			DB: db,
+			db: db,
 		}
 	})
 

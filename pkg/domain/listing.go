@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	OrderByName int = iota
+	OrderByDate
+)
+
 type DirectoryEnt struct {
 	Id           uint      `json:"id"`
 	Name         string    `json:"name"`
@@ -37,7 +42,7 @@ type ListingRepository interface {
 
 	FindAll(ctx context.Context) (*[]Directory, error)
 
-	FindAllRange(ctx context.Context, take, skip int) (*[]Directory, error)
+	FindAllRange(ctx context.Context, take, skip, order int) (*[]Directory, error)
 
 	Update(ctx context.Context, path, name, thumbnail string) (Directory, error)
 }
@@ -49,7 +54,7 @@ type ListingService interface {
 
 	ListAllDirectoriesLike(ctx context.Context, name string) (*[]DirectoryEnt, error)
 
-	ListAllDirectoriesRange(ctx context.Context, take, skip int) (*[]DirectoryEnt, error)
+	ListAllDirectoriesRange(ctx context.Context, take, skip, order int) (*[]DirectoryEnt, error)
 }
 
 type ListingHandler interface {

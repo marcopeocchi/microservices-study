@@ -6,11 +6,11 @@ import (
 )
 
 type Service struct {
-	Repo domain.ListingRepository
+	repo domain.ListingRepository
 }
 
 func (s *Service) ListAllDirectories(ctx context.Context) (*[]domain.DirectoryEnt, error) {
-	dirs, err := s.Repo.FindAll(ctx)
+	dirs, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -29,8 +29,8 @@ func (s *Service) ListAllDirectories(ctx context.Context) (*[]domain.DirectoryEn
 	return &previews, nil
 }
 
-func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip int) (*[]domain.DirectoryEnt, error) {
-	dirs, err := s.Repo.FindAllRange(ctx, take, skip)
+func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order int) (*[]domain.DirectoryEnt, error) {
+	dirs, err := s.repo.FindAllRange(ctx, take, skip, order)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip int) (
 }
 
 func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]domain.DirectoryEnt, error) {
-	dirs, err := s.Repo.FindAllByName(ctx, name)
+	dirs, err := s.repo.FindAllByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]d
 }
 
 func (s *Service) CountDirectories(ctx context.Context) (int64, error) {
-	count, err := s.Repo.Count(ctx)
+	count, err := s.repo.Count(ctx)
 
 	if err != nil {
 		return 0, err
