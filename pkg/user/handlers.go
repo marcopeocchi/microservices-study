@@ -62,7 +62,6 @@ func (h *Handler) Logout() http.HandlerFunc {
 		cookie := http.Cookie{
 			Name:     common.TOKEN_COOKIE_NAME,
 			HttpOnly: true,
-			Path:     "/",
 			Expires:  time.UnixMilli(0),
 			Value:    "",
 		}
