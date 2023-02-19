@@ -6,7 +6,6 @@ import (
 	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -47,9 +46,10 @@ func (h *Handler) Login() http.HandlerFunc {
 		cookie := http.Cookie{
 			Name:     common.TOKEN_COOKIE_NAME,
 			HttpOnly: true,
-			Secure:   os.Getenv("TESTING") == "",
+			Secure:   false,
 			Expires:  common.TOKEN_EXPIRE_TIME,
 			Value:    *token,
+			Path:     "/",
 		}
 		http.SetCookie(w, &cookie)
 
