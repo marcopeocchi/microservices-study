@@ -139,6 +139,7 @@ func authenticated(next http.Handler) http.Handler {
 		} else {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			log.Println(err.Error())
+			return
 		}
 
 		next.ServeHTTP(w, r)
