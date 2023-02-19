@@ -6,6 +6,7 @@ import (
 	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -29,7 +30,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			return
 		}
 
-		var req loginRequest
+		req := loginRequest{}
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
@@ -46,6 +47,7 @@ func (h *Handler) Login() http.HandlerFunc {
 		cookie := http.Cookie{
 			Name:     "jwt_token",
 			HttpOnly: true,
+			Secure:   os.Getenv("TESTING") != "",
 			Path:     "/",
 			Expires:  common.TOKEN_EXPIRE_TIME,
 			Value:    *token,

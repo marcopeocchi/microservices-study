@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"fuu/v/pkg"
-	"fuu/v/pkg/common"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
 	"log"
@@ -53,7 +52,7 @@ func initDatabase(db *gorm.DB) {
 
 	p, err := bcrypt.GenerateFromPassword(
 		[]byte(config.Instance().Masterpass),
-		common.BCRYPT_ROUNDS,
+		bcrypt.DefaultCost,
 	)
 	if err != nil {
 		log.Fatalln(err)

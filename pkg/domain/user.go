@@ -26,6 +26,7 @@ type User struct {
 	ID       uint
 	Username string `gorm:"unique;not null"`
 	Password string
+	Salt     string
 	Role     int
 }
 

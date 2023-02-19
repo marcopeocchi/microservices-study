@@ -86,8 +86,8 @@ func reactHandler(fs *fs.FS) http.Handler {
 }
 
 // Middleware for allowing the serve of thumbnails as they're saved as file
-// without extension. By rule thumbnails are AVIF pictures, so a Content-Type header
-// is set.
+// without extension. By rule thumbnails are AVIF pictures, so a Content-Type
+// header is set.
 func serveThumbnail(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/avif")
