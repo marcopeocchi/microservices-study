@@ -26,6 +26,17 @@ type Config struct {
 	Port              int    `yaml:"port"`
 }
 
+func Instance() *Config {
+	if instance == nil {
+		lock.Lock()
+		defer lock.Unlock()
+		if instance == nil {
+			instance = load()
+		}
+	}
+	return instance
+}
+
 func load() *Config {
 	configFile, err := os.ReadFile("./Fuufile")
 
@@ -77,15 +88,4 @@ func overrideWithArgs(config *Config) {
 	flag.IntVar(&config.Port, "p", 4456, "Where server will listen at")
 
 	flag.Parse()
-}
-
-func Instance() *Config {
-	if instance == nil {
-		lock.Lock()
-		defer lock.Unlock()
-		if instance == nil {
-			instance = load()
-		}
-	}
-	return instance
 }
