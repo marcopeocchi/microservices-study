@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"fuu/v/pkg/common"
 	"io"
 	"io/fs"
 	"log"
@@ -104,7 +105,7 @@ func authenticated(next http.Handler) http.Handler {
 			return
 		}
 
-		cookie, err := r.Cookie("jwt_token")
+		cookie, err := r.Cookie(common.TOKEN_COOKIE_NAME)
 
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)

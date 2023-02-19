@@ -45,7 +45,7 @@ func (h *Handler) Login() http.HandlerFunc {
 		}
 
 		cookie := http.Cookie{
-			Name:     "jwt_token",
+			Name:     common.TOKEN_COOKIE_NAME,
 			HttpOnly: true,
 			Secure:   os.Getenv("TESTING") == "",
 			Expires:  common.TOKEN_EXPIRE_TIME,
@@ -60,7 +60,7 @@ func (h *Handler) Login() http.HandlerFunc {
 func (h *Handler) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{
-			Name:     "jwt_token",
+			Name:     common.TOKEN_COOKIE_NAME,
 			HttpOnly: true,
 			Path:     "/",
 			Expires:  time.UnixMilli(0),
