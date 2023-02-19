@@ -4,7 +4,6 @@ import (
 	"fuu/v/pkg/domain"
 	"sync"
 
-	"github.com/google/wire"
 	"gorm.io/gorm"
 )
 
@@ -15,14 +14,6 @@ var (
 	handlerSingle  sync.Once
 	repositoryOnce sync.Once
 	serviceOnce    sync.Once
-	ProviderSet    wire.ProviderSet = wire.NewSet(
-		ProvideHandler,
-		ProvideRepository,
-		ProvideService,
-		wire.Bind(new(domain.ListingHandler), new(*Handler)),
-		wire.Bind(new(domain.ListingRepository), new(*Repository)),
-		wire.Bind(new(domain.ListingService), new(*Service)),
-	)
 )
 
 func ProvideHandler(service domain.ListingService) *Handler {

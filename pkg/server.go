@@ -100,12 +100,12 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(cfg.WorkingDir))))))
 	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(cfg.CacheDir)))))))
 
-	mux.Handle("/list", CORS(authenticated(listing.Wire(db).ListAllDirectories())))
+	mux.Handle("/list", CORS(authenticated(listing.Container(db).ListAllDirectories())))
 	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(static.StreamVideoFile))))
 	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(static.ListDirectoryContentHandler))))
 
-	mux.Handle("/user/login", CORS(user.Wire(db).Login()))
-	mux.Handle("/user/logout", CORS(user.Wire(db).Logout()))
+	mux.Handle("/user/login", CORS(user.Container(db).Login()))
+	mux.Handle("/user/logout", CORS(user.Container(db).Logout()))
 
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
