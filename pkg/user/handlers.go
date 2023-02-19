@@ -48,7 +48,6 @@ func (h *Handler) Login() http.HandlerFunc {
 			Name:     "jwt_token",
 			HttpOnly: true,
 			Secure:   os.Getenv("TESTING") == "",
-			Path:     "/",
 			Expires:  common.TOKEN_EXPIRE_TIME,
 			Value:    *token,
 		}
