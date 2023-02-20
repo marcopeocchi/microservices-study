@@ -128,6 +128,7 @@ func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 		routes: []string{
 			"/login",
 			"/gallery",
+			"/help",
 		},
 	}
 	r.PathPrefix("/").Handler(sh.Handler())
