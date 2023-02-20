@@ -55,7 +55,7 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 
 	// HTTP Server
 	go func() {
-		server := createAppServer(cfg.Port, frontend, db)
+		server := createServer(cfg.Port, frontend, db)
 		server.ListenAndServe()
 		wg.Done()
 	}()
@@ -92,9 +92,7 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 	wg.Wait()
 }
 
-func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
-	reactBuild, _ := fs.Sub(*app, "frontend/dist")
-
+func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	r := mux.NewRouter()
 
 	// User group router
@@ -123,7 +121,16 @@ func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	tr.Use(serveThumbnail)
 
 	// Frontend
-	r.PathPrefix("/").Handler(embeddedSPAHandler(&reactBuild))
+	build, _ := fs.Sub(*app, "frontend/dist")
+	sh := SpaHandler{
+		entryPoint: "index.html",
+		filesystem: &build,
+		routes: []string{
+			"/login",
+			"/gallery",
+		},
+	}
+	r.PathPrefix("/").Handler(sh.Handler())
 	r.Use(CORS)
 
 	return &http.Server{
