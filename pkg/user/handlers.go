@@ -21,11 +21,14 @@ type loginRequest struct {
 func (h *Handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		defer r.Body.Close()
+
+		defer func() {
+			cancel()
+			r.Body.Close()
+		}()
 
 		if r.Method != http.MethodPost {
-			http.Error(w, "", http.StatusMethodNotAllowed)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
