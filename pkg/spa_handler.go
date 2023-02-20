@@ -18,6 +18,11 @@ type SpaHandler struct {
 	routes     []string
 }
 
+func (s *SpaHandler) AddRoute(route string) *SpaHandler {
+	s.routes = append(s.routes, route)
+	return s
+}
+
 // Handler for serving a compiled react frontend: each client-side routes must be provided
 func (s *SpaHandler) Handler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

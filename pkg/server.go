@@ -122,15 +122,16 @@ func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 
 	// Frontend
 	build, _ := fs.Sub(*app, "frontend/dist")
+
 	sh := SpaHandler{
 		entryPoint: "index.html",
 		filesystem: &build,
-		routes: []string{
-			"/login",
-			"/gallery",
-			"/help",
-		},
 	}
+
+	sh.AddRoute("/login")
+	sh.AddRoute("/gallery")
+	sh.AddRoute("/help")
+
 	r.PathPrefix("/").Handler(sh.Handler())
 	r.Use(CORS)
 
