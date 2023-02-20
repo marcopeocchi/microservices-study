@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -94,21 +95,41 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 func createAppServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	reactBuild, _ := fs.Sub(*app, "frontend/dist")
 
-	mux := http.NewServeMux()
-	mux.Handle("/", reactHandler(&reactBuild))
+	r := mux.NewRouter()
 
-	mux.Handle("/static/", http.StripPrefix("/static", neuter(authenticated(http.FileServer(http.Dir(cfg.WorkingDir))))))
-	mux.Handle("/thumbs/", http.StripPrefix("/thumbs", neuter(authenticated(serveThumbnail(http.FileServer(http.Dir(cfg.CacheDir)))))))
+	// User group router
+	ur := r.PathPrefix("/user").Subrouter()
+	ur.HandleFunc("/login", user.Container(db).Login())
+	ur.HandleFunc("/logout", user.Container(db).Logout())
+	ur.Use(CORS)
 
-	mux.Handle("/list", CORS(authenticated(listing.Container(db).ListAllDirectories())))
-	mux.Handle("/stream", CORS(authenticated(http.HandlerFunc(static.StreamVideoFile))))
-	mux.Handle("/gallery", CORS(authenticated(http.HandlerFunc(static.ListDirectoryContentHandler))))
+	// Overlay functionalites router
+	or := r.PathPrefix("/overlay").Subrouter()
+	or.HandleFunc("/list", listing.Container(db).ListAllDirectories())
+	or.HandleFunc("/stream", http.HandlerFunc(static.StreamVideoFile))
+	or.HandleFunc("/gallery", http.HandlerFunc(static.ListDirectoryContentHandler))
+	or.Use(CORS)
+	or.Use(authenticated)
 
-	mux.Handle("/user/login", CORS(user.Container(db).Login()))
-	mux.Handle("/user/logout", CORS(user.Container(db).Logout()))
+	// Static resources related router
+	sr := r.PathPrefix("/static").Subrouter()
+	sr.PathPrefix("/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir(cfg.WorkingDir))))
+	sr.Use(neuter)
+
+	// Thumbnails related router
+	tr := r.PathPrefix("/thumbs").Subrouter()
+	tr.PathPrefix("/").Handler(http.StripPrefix("/thumbs", http.FileServer(http.Dir(cfg.CacheDir))))
+	tr.Use(neuter)
+	tr.Use(serveThumbnail)
+
+	// Frontend
+	r.PathPrefix("/").Handler(embeddedSPAHandler(&reactBuild))
+	r.Use(CORS)
 
 	return &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      r,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
 }

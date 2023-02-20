@@ -41,7 +41,7 @@ func neuter(next http.Handler) http.Handler {
 
 // Middleware for serving a compiled react frontend: each client-side route
 // must be provided
-func reactHandler(fs *fs.FS) http.Handler {
+func embeddedSPAHandler(fs *fs.FS) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

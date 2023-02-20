@@ -13,6 +13,7 @@ require (
 	github.com/goccy/go-json v0.10.0
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.8.0
 	golang.org/x/crypto v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.4.4

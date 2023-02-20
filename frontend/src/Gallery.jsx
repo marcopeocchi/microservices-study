@@ -56,7 +56,7 @@ export default function Gallery() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch(`${getHost()}/gallery?dir=${galleryTitle}`)
+      const res = await fetch(`${getHost()}/overlay/gallery?dir=${galleryTitle}`)
       if (res.redirected || res.status != 200) {
         navigate('/login')
       }

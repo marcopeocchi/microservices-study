@@ -53,7 +53,7 @@ function App() {
   }, [])
 
   const loadData = async () => {
-    const res = await fetch(`${getHost()}/list?fetchBy=${fetchMode}&filter=${searchfilter}&page=${page}&pageSize=${56}`)
+    const res = await fetch(`${getHost()}/overlay/list?fetchBy=${fetchMode}&filter=${searchfilter}&page=${page}&pageSize=${56}`)
     if (res.redirected || res.status != 200) {
       navigate('/login')
     }
