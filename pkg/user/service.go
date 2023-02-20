@@ -6,6 +6,7 @@ import (
 	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -34,7 +35,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*string
 		"userID":    u.ID,
 		"username":  u.Username,
 		"role":      u.Role,
-		"expiresAt": common.TOKEN_EXPIRE_TIME,
+		"expiresAt": time.Now().Add(time.Minute * 30),
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWTSECRET")))
 
