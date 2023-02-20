@@ -50,7 +50,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			Name:     common.TOKEN_COOKIE_NAME,
 			HttpOnly: true,
 			Secure:   false,
-			Expires:  common.TOKEN_EXPIRE_TIME,
+			Expires:  time.Now().Add(time.Minute * 30),
 			Value:    *token,
 			Path:     "/",
 		}
