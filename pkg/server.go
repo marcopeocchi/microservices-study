@@ -124,7 +124,7 @@ func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	build, _ := fs.Sub(*app, "frontend/dist")
 
 	sh := SpaHandler{
-		entryPoint: "index.html",
+		entrypoint: "index.html",
 		filesystem: &build,
 	}
 

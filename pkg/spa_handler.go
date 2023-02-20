@@ -13,7 +13,7 @@ import (
 )
 
 type SpaHandler struct {
-	entryPoint string
+	entrypoint string
 	filesystem *fs.FS
 	routes     []string
 }
@@ -37,10 +37,13 @@ func (s *SpaHandler) Handler() http.HandlerFunc {
 		hasRoute := false
 		for _, route := range s.routes {
 			hasRoute = strings.HasPrefix(path, route)
+			if hasRoute {
+				break
+			}
 		}
 
 		if path == "/" || hasRoute {
-			path = s.entryPoint
+			path = s.entrypoint
 		}
 
 		path = strings.TrimPrefix(path, "/")
