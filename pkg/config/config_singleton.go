@@ -24,6 +24,12 @@ type Config struct {
 	ThumbnailHeight   int    `yaml:"thumbnailHeight"`
 	ThumbnailQuality  int    `yaml:"thumbnailQuality"`
 	Port              int    `yaml:"port"`
+	UseMySQL          bool   `yaml:"useMySQL"`
+	MysqlUser         string `yaml:"mysqlUser"`
+	MysqlPass         string `yaml:"mysqlPass"`
+	MysqlAddr         string `yaml:"mysqlAddr"`
+	MysqlPort         string `yaml:"mysqlPort"`
+	MysqlDBName       string `yaml:"mysqlDBName"`
 }
 
 func Instance() *Config {
@@ -64,6 +70,12 @@ func fallbackToEnv(config *Config) {
 	config.Masterpass = os.Getenv("MASTERPASS")
 	config.ServerSecret = os.Getenv("SECRET")
 	config.WorkingDir = os.Getenv("WORKDIR")
+
+	config.MysqlUser = os.Getenv("MYSQL_USER")
+	config.MysqlPass = os.Getenv("MYSQL_PASS")
+	config.MysqlAddr = os.Getenv("MYSQL_ADDR")
+	config.MysqlPort = os.Getenv("MYSQL_PORT")
+	config.MysqlDBName = os.Getenv("MYSQL_DB_NAME")
 
 	height, err := strconv.Atoi(os.Getenv("THUMBNAIL_HEIGHT"))
 	if err != nil {

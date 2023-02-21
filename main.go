@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"fuu/v/pkg"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -35,9 +37,25 @@ func main() {
 	}
 
 	cfg.CacheDir = cacheDir
-	dbPath := filepath.Join(cfg.CacheDir, "fuu.db")
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		cfg.MysqlUser,
+		cfg.MysqlPass,
+		cfg.MysqlAddr,
+		cfg.MysqlPort,
+		cfg.MysqlDBName,
+	)
+
+	var db *gorm.DB
+
+	if cfg.UseMySQL {
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	} else {
+		dbPath := filepath.Join(cfg.CacheDir, "fuu.db")
+		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	}
+
 	if err != nil {
 		log.Panicln(err)
 	}
