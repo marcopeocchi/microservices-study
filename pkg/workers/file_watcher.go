@@ -7,8 +7,10 @@ import (
 )
 
 type FileWatcher struct {
-	watcher    *fsnotify.Watcher
-	WorkingDir string
+	watcher       *fsnotify.Watcher
+	WorkingDir    string
+	OnFileCreated func(event string)
+	OnFileDeleted func(event string)
 }
 
 func (f *FileWatcher) New() {
@@ -24,7 +26,7 @@ func (f *FileWatcher) New() {
 	}
 }
 
-func (f *FileWatcher) Start(onFileCreated, onFileDeleted func(event string)) {
+func (f *FileWatcher) Start() {
 	// Start a light NON-Recursive Filesystem watcher as a background routine.
 	for {
 		select {
@@ -34,11 +36,11 @@ func (f *FileWatcher) Start(onFileCreated, onFileDeleted func(event string)) {
 			}
 			if event.Has(fsnotify.Create) {
 				log.Println("Added directory:", event.Name)
-				onFileCreated(event.Name)
+				f.OnFileCreated(event.Name)
 			}
 			if event.Has(fsnotify.Remove) {
 				log.Println("Removing directory:", event.Name)
-				onFileDeleted(event.Name)
+				f.OnFileDeleted(event.Name)
 			}
 		case err, ok := <-f.watcher.Errors:
 			if !ok {

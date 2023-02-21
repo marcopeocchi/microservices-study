@@ -34,7 +34,9 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 	}
 
 	fileWatcher := workers.FileWatcher{
-		WorkingDir: cfg.WorkingDir,
+		WorkingDir:    cfg.WorkingDir,
+		OnFileCreated: func(event string) { thumbnailer.Start() },
+		OnFileDeleted: func(event string) { thumbnailer.Remove(event) },
 	}
 	fileWatcher.New()
 
@@ -79,10 +81,7 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 			wg.Done()
 		}()
 
-		fileWatcher.Start(
-			func(event string) { thumbnailer.Start() },
-			func(event string) { thumbnailer.Remove(event) },
-		)
+		fileWatcher.Start()
 	}()
 
 	log.Println("Server started")
