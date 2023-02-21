@@ -112,12 +112,14 @@ func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	sr := r.PathPrefix("/static").Subrouter()
 	sr.PathPrefix("/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir(cfg.WorkingDir))))
 	sr.Use(neuter)
+	sr.Use(authenticated)
 
 	// Thumbnails related router
 	tr := r.PathPrefix("/thumbs").Subrouter()
 	tr.PathPrefix("/").Handler(http.StripPrefix("/thumbs", http.FileServer(http.Dir(cfg.CacheDir))))
 	tr.Use(neuter)
 	tr.Use(serveThumbnail)
+	tr.Use(authenticated)
 
 	// Frontend
 	build, _ := fs.Sub(*app, "frontend/dist")
