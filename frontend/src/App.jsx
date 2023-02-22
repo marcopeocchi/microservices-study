@@ -39,8 +39,12 @@ function App() {
   const search = useRef(null)
 
   useEffect(() => {
-    loadData()
-  }, [fetchMode, searchfilter, page])
+    loadData(window.location.hash.split('-').at(1) || 1)
+  }, [fetchMode, searchfilter, page, window.location.hash])
+
+  useEffect(() => {
+    window.location.hash = `page-${page}`
+  }, [page])
 
   useEffect(() => {
     const $filter = fromEvent(search.current, 'keyup')
@@ -52,7 +56,7 @@ function App() {
     return () => $filter.unsubscribe()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (page) => {
     const res = await fetch(`${getHost()}/overlay/list?fetchBy=${fetchMode}&filter=${searchfilter}&page=${page}&pageSize=${56}`)
     if (res.redirected || res.status != 200) {
       navigate('/login')
