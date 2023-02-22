@@ -28,7 +28,7 @@ function App() {
   const [hide, setHide] = useState(localStorage.getItem("hide") === "true")
   const [loading, setLoading] = useState(true)
   const [pages, setPages] = useState(0)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(window.location.hash.split('-').at(1) || 1)
   const [list, setList] = useState([])
   const [listView, setListView] = useState(localStorage.getItem("listView") === "true")
 
@@ -39,7 +39,7 @@ function App() {
   const search = useRef(null)
 
   useEffect(() => {
-    loadData(window.location.hash.split('-').at(1) || 1)
+    loadData(page)
   }, [fetchMode, searchfilter, page, window.location.hash])
 
   useEffect(() => {
@@ -57,7 +57,7 @@ function App() {
   }, [])
 
   const loadData = async (page) => {
-    const res = await fetch(`${getHost()}/overlay/list?fetchBy=${fetchMode}&filter=${searchfilter}&page=${page}&pageSize=${56}`)
+    const res = await fetch(`${getHost()}/overlay/list?fetchBy=${fetchMode}&filter=${searchfilter}&page=${page}&pageSize=${49}`)
     if (res.redirected || res.status != 200) {
       navigate('/login')
     }
