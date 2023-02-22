@@ -46,7 +46,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 
 	var _order string
 	if order == domain.OrderByDate {
-		_order = "updated_at"
+		_order = "updated_at desc"
 	}
 	if order == domain.OrderByName {
 		_order = "name"
