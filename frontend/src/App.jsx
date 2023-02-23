@@ -5,7 +5,6 @@ import {
   CgInfo,
   CgList,
   CgLogOut,
-  CgRedo,
   CgSearch,
   CgSortAz
 } from 'react-icons/cg'
@@ -113,12 +112,6 @@ function App() {
           selected={hide}
         >
           <CgEditFade />
-        </QuickAction>
-        <QuickAction
-          description="Reload"
-          onClick={() => loadData()}
-        >
-          <CgRedo />
         </QuickAction>
         <QuickAction
           description="Search"
