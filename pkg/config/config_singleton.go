@@ -30,6 +30,8 @@ type Config struct {
 	MysqlAddr         string `yaml:"mysqlAddr"`
 	MysqlPort         string `yaml:"mysqlPort"`
 	MysqlDBName       string `yaml:"mysqlDBName"`
+	RedisAddr         string `yaml:"redisAddr"`
+	RedisPass         string `yaml:"redisPass"`
 }
 
 func Instance() *Config {

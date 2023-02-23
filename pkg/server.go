@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"fuu/v/pkg/cli"
 	config "fuu/v/pkg/config"
+	"fuu/v/pkg/gallery"
 	"fuu/v/pkg/listing"
 	"fuu/v/pkg/static"
 	"fuu/v/pkg/user"
@@ -17,12 +18,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 var cfg = config.Instance()
 
-func RunBlocking(db *gorm.DB, frontend *embed.FS) {
+func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 
 	thumbnailer := workers.Thumbnailer{
 		BaseDir:           cfg.WorkingDir,
@@ -57,7 +59,7 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 
 	// HTTP Server
 	go func() {
-		server := createServer(cfg.Port, frontend, db)
+		server := createServer(cfg.Port, frontend, db, rdb)
 		server.ListenAndServe()
 		wg.Done()
 	}()
@@ -91,7 +93,7 @@ func RunBlocking(db *gorm.DB, frontend *embed.FS) {
 	wg.Wait()
 }
 
-func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
+func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client) *http.Server {
 	r := mux.NewRouter()
 
 	// User group router
@@ -104,7 +106,7 @@ func createServer(port int, app *embed.FS, db *gorm.DB) *http.Server {
 	or := r.PathPrefix("/overlay").Subrouter()
 	or.HandleFunc("/list", listing.Container(db).ListAllDirectories())
 	or.HandleFunc("/stream", http.HandlerFunc(static.StreamVideoFile))
-	or.HandleFunc("/gallery", http.HandlerFunc(static.ListDirectoryContentHandler))
+	or.HandleFunc("/gallery", gallery.Container(rdb, cfg.WorkingDir).DirectoryContent())
 	or.Use(CORS)
 	or.Use(authenticated)
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
@@ -60,8 +61,16 @@ func main() {
 		log.Panicln(err)
 	}
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPass,
+		DB:       0,
+	})
+
+	log.Println(rdb)
+
 	initDatabase(db)
-	pkg.RunBlocking(db, &reactApp)
+	pkg.RunBlocking(db, rdb, &reactApp)
 }
 
 func initDatabase(db *gorm.DB) {
