@@ -37,6 +37,8 @@ type job struct {
 }
 
 func (t *Thumbnailer) Start() {
+	t.prune()
+
 	files, err := os.ReadDir(t.BaseDir)
 	log.Printf("Creating thumbnails for %d entries incrementally\n", len(files))
 
@@ -167,4 +169,22 @@ func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
 			Thumbnail: w.Id,
 		})
 	}
+}
+
+func (t *Thumbnailer) prune() {
+	all := new([]domain.Directory)
+	t.Database.Find(all)
+
+	log.Println("Start database prune")
+	count := 0
+
+	for _, entry := range *all {
+		_, err := os.Stat(entry.Path)
+		if os.IsNotExist(err) {
+			t.Database.Where("path = ?", entry.Path).Delete(&domain.Directory{})
+			count++
+		}
+	}
+
+	log.Println("Database pruned removed", count, "rows")
 }
