@@ -67,8 +67,6 @@ func main() {
 		DB:       0,
 	})
 
-	log.Println(rdb)
-
 	initDatabase(db)
 	pkg.RunBlocking(db, rdb, &reactApp)
 }

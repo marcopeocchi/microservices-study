@@ -1,9 +1,12 @@
 package listing
 
-import "gorm.io/gorm"
+import (
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+)
 
-func Container(db *gorm.DB) *Handler {
-	repository := ProvideRepository(db)
+func Container(db *gorm.DB, rdb *redis.Client) *Handler {
+	repository := ProvideRepository(db, rdb)
 	service := ProvideService(repository)
 	handler := ProvideHandler(service)
 

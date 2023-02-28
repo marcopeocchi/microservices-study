@@ -23,10 +23,10 @@ type DirectoryEnt struct {
 
 type Directory struct {
 	gorm.Model
-	Path      string `gorm:"unique;not null"`
-	Name      string
-	Loved     bool
-	Thumbnail string
+	Path      string `gorm:"unique;not null" json:"path"`
+	Name      string `json:"name"`
+	Loved     bool   `json:"loved"`
+	Thumbnail string `json:"thumbnail"`
 }
 
 type ListingRepository interface {

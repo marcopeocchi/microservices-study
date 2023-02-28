@@ -4,6 +4,7 @@ import (
 	"fuu/v/pkg/domain"
 	"sync"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -36,10 +37,11 @@ func ProvideService(repository domain.ListingRepository) *Service {
 	return service
 }
 
-func ProvideRepository(db *gorm.DB) *Repository {
+func ProvideRepository(db *gorm.DB, rdb *redis.Client) *Repository {
 	repositoryOnce.Do(func() {
 		repository = &Repository{
-			db: db,
+			db:  db,
+			rdb: rdb,
 		}
 	})
 

@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"fuu/v/pkg/domain"
+	"time"
 
+	"github.com/goccy/go-json"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Repository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func (r *Repository) Count(ctx context.Context) (int64, error) {
@@ -37,7 +41,21 @@ func (r *Repository) FindByName(ctx context.Context, name string) (domain.Direct
 
 func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domain.Directory, error) {
 	all := new([]domain.Directory)
+
+	cached, _ := r.rdb.Get(ctx, filter).Bytes()
+	if len(cached) > 0 {
+		json.Unmarshal(cached, all)
+		return all, nil
+	}
+
 	r.db.WithContext(ctx).Where("name LIKE ?", "%"+filter+"%").Find(all)
+
+	encoded, err := json.Marshal(*all)
+	if err != nil {
+		return nil, err
+	}
+	r.rdb.SetNX(ctx, filter, encoded, time.Minute)
+
 	return all, nil
 }
 

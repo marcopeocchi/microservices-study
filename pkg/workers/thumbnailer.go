@@ -96,8 +96,11 @@ func (t *Thumbnailer) Start() {
 }
 
 func (t *Thumbnailer) Remove(dirpath string) {
-	t.Database.Where("path = ?", fmt.Sprintf("`%s`", dirpath)).Delete(&domain.Directory{})
-	os.Remove(dirpath)
+	target := new(domain.Directory)
+	t.Database.Where("path = ?", fmt.Sprintf("`%s`", dirpath)).First(&target)
+
+	os.Remove(filepath.Join(t.CacheDir, target.Thumbnail))
+	t.Database.Delete(&target, target.ID)
 }
 
 func (t *Thumbnailer) mainThread(queue []job) {

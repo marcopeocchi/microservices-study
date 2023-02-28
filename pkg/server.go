@@ -108,7 +108,7 @@ func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client) *http
 
 	// Overlay functionalites router
 	or := r.PathPrefix("/overlay").Subrouter()
-	or.HandleFunc("/list", listing.Container(db).ListAllDirectories())
+	or.HandleFunc("/list", listing.Container(db, rdb).ListAllDirectories())
 	or.HandleFunc("/stream", http.HandlerFunc(static.StreamVideoFile))
 	or.HandleFunc("/gallery", gallery.Container(rdb, cfg.WorkingDir).DirectoryContent())
 	or.Use(CORS)
