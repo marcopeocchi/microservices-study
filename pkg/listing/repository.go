@@ -43,6 +43,7 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 	all := new([]domain.Directory)
 
 	cached, _ := r.rdb.Get(ctx, filter).Bytes()
+
 	if len(cached) > 0 {
 		json.Unmarshal(cached, all)
 		return all, nil
