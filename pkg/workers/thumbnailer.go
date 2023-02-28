@@ -110,14 +110,14 @@ func (t *Thumbnailer) mainThread(queue []job) {
 	log.Println(len(queue), "directories needs a thumbnail")
 
 	// block if guard channel is filled with n jobs
-	pipeline := make(chan bool, maxConcurrency)
+	pipeline := make(chan int, maxConcurrency)
 	messages := make(chan job)
 
 	go t.thumbnailRefSaver(messages)
 
 	for _, work := range queue {
 		// take
-		pipeline <- true
+		pipeline <- 1
 		// job closure
 		go func(w job) {
 			var cmd *exec.Cmd
@@ -186,6 +186,15 @@ func (t *Thumbnailer) prune() {
 		if os.IsNotExist(err) {
 			t.Database.Where("path = ?", entry.Path).Delete(&domain.Directory{})
 			count++
+		}
+	}
+
+	for _, entry := range *all {
+		path := filepath.Join(t.CacheDir, entry.Thumbnail)
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			log.Println("Deleting", path)
+			os.Remove(path)
 		}
 	}
 
