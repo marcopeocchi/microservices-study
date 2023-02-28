@@ -150,29 +150,6 @@ func GenerateToken2String(message, secret []byte) (string, error) {
 	return fmt.Sprintf("%s.%s", token, thumbprint), nil
 }
 
-// Recompute the token and perform a validation against the given one.
-func ValidateToken2String(token string, message, secret []byte) (bool, error) {
-	// token[0] thumbprint[1]
-	parts := strings.Split(token, ".")
-	if len(parts) != 2 {
-		return false, errors.New("token malformed")
-	}
-
-	tokenToMatch, err := GenerateToken2String(message, secret)
-	if err != nil {
-		return false, err
-	}
-
-	matches := strings.Split(tokenToMatch, ".")
-
-	// thumbprint verification
-	if !hmac.Equal([]byte(parts[1]), []byte(matches[1])) {
-		return false, errors.New("thumbprint does not match")
-	}
-
-	return true, nil
-}
-
 func GenerateRandomString(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)
