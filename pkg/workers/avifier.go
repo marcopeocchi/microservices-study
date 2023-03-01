@@ -9,17 +9,18 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 )
 
 var (
-	maxWorkers = make(chan int, 1)
-	pipeline   = make(chan int, runtime.NumCPU())
-	quality    = 75
+	pipeline = make(chan int, runtime.NumCPU())
+	quality  = 75
 )
 
 func Avifier(workingDir string, images []string) {
 	err := os.Mkdir(filepath.Join(workingDir, "avif"), os.ModePerm)
+
 	if os.IsExist(err) {
 		log.Println(workingDir, "already contains avif elements")
 		log.Println(err.Error())
@@ -27,9 +28,10 @@ func Avifier(workingDir string, images []string) {
 	}
 
 	start := time.Now()
-
-	maxWorkers <- 1
 	log.Println("Requested", workingDir, "AVIF conversion")
+
+	wg := new(sync.WaitGroup)
+	wg.Add(len(images))
 
 	for _, image := range images {
 		pipeline <- 1
@@ -45,11 +47,12 @@ func Avifier(workingDir string, images []string) {
 				cmd.Wait()
 			}
 			<-pipeline
+			wg.Done()
 		}(image)
 	}
 
-	stop := time.Since(start)
+	wg.Wait()
 
-	<-maxWorkers
+	stop := time.Since(start)
 	log.Println("Completed", workingDir, "AVIF conversion in", stop)
 }
