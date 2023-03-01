@@ -61,7 +61,7 @@ export default function Gallery() {
         navigate('/login')
       }
       const data = await res.json()
-      setGalleryData(data.list)
+      setGalleryData(data.avifAvailable ? data.avif : data.list)
     })();
   }, [galleryTitle])
 

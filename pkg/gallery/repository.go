@@ -2,6 +2,7 @@ package gallery
 
 import (
 	"context"
+	"fmt"
 	"fuu/v/pkg/domain"
 	"fuu/v/pkg/utils"
 	"fuu/v/pkg/workers"
@@ -63,7 +64,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	for i, file := range filesAvif {
 		if !file.IsDir() {
 			if filepath.Ext(file.Name()) == ".avif" {
-				resAvif[i] = file.Name()
+				resAvif[i] = fmt.Sprintf("/avif/%s", file.Name())
 				continue
 			}
 		}
