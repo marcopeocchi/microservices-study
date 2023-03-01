@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	pipeline = make(chan int, runtime.NumCPU())
+	pipeline = make(chan int, runtime.NumCPU()-1)
 	quality  = 75
 )
 
