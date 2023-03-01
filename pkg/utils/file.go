@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"mime"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,6 +29,10 @@ func IsVideo(mime string) bool {
 
 func IsImage(mime string) bool {
 	return strings.HasPrefix(mime, "image")
+}
+
+func IsImagePath(path string) bool {
+	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(path)), "image")
 }
 
 func GetImageIndex(filename string) (int64, error) {

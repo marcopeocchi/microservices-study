@@ -6,7 +6,9 @@ import (
 )
 
 type Content struct {
-	List []string `json:"list"`
+	List          []string `json:"list"`
+	Avif          []string `json:"avif"`
+	AvifAvailable bool     `json:"avifAvailable"`
 }
 
 type DirectoryRepository interface {
