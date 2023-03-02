@@ -11,6 +11,7 @@ type Content struct {
 	WebP          []string `json:"webp"`
 	AvifAvailable bool     `json:"avifAvailable"`
 	WebPAvailable bool     `json:"webpAvailable"`
+	Cached        bool     `json:"cached"`
 }
 
 type DirectoryRepository interface {

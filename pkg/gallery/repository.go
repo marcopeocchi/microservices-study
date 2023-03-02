@@ -34,6 +34,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	if len(cached) > 0 {
 		res := domain.Content{}
 		err := json.Unmarshal(cached, &res)
+		res.Cached = true
 
 		return res, err
 	}
