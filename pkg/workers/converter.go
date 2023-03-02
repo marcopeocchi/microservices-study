@@ -15,20 +15,25 @@ import (
 
 var (
 	pipeline = make(chan int, runtime.NumCPU()-1)
-	quality  = 75
+	quality  = 80
 )
 
-func Avifier(workingDir string, images []string) {
-	err := os.Mkdir(filepath.Join(workingDir, "avif"), os.ModePerm)
+const (
+	FormatAvif string = "avif"
+	FormatWebP string = "webp"
+)
+
+func Converter(workingDir string, images []string, format string) {
+	err := os.Mkdir(filepath.Join(workingDir, format), os.ModePerm)
 
 	if os.IsExist(err) {
-		log.Println(workingDir, "already contains avif elements")
+		log.Println(workingDir, "already contains optimized elements")
 		log.Println(err.Error())
 		return
 	}
 
 	start := time.Now()
-	log.Println("Requested", workingDir, "AVIF conversion")
+	log.Println("Requested", workingDir, format, "conversion")
 
 	wg := new(sync.WaitGroup)
 	wg.Add(len(images))
@@ -39,9 +44,9 @@ func Avifier(workingDir string, images []string) {
 			if utils.IsImagePath(img) {
 				cmd := exec.Command(
 					"convert", filepath.Join(workingDir, img),
-					"-format", "avif",
+					"-format", format,
 					"-quality", strconv.Itoa(quality),
-					filepath.Join(workingDir, "avif", fmt.Sprint(img, ".avif")),
+					filepath.Join(workingDir, format, fmt.Sprint(img, ".", format)),
 				)
 				cmd.Start()
 				cmd.Wait()
@@ -54,5 +59,5 @@ func Avifier(workingDir string, images []string) {
 	wg.Wait()
 
 	stop := time.Since(start)
-	log.Println("Completed", workingDir, "AVIF conversion in", stop)
+	log.Println("Completed", workingDir, format, "conversion in", stop)
 }

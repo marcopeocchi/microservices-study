@@ -3,6 +3,7 @@ package gallery
 import (
 	"context"
 	"fmt"
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
 	"fuu/v/pkg/utils"
 	"fuu/v/pkg/workers"
@@ -23,6 +24,10 @@ type Repository struct {
 	workingDir string
 }
 
+var (
+	imageFormat = config.Instance().ImageOptimizationFormat
+)
+
 func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Content, error) {
 	cached, _ := r.rdb.Get(ctx, path).Bytes()
 
@@ -33,8 +38,11 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		return res, err
 	}
 
-	files, _ := os.ReadDir(filepath.Join(r.workingDir, path))
-	filesAvif, _ := os.ReadDir(filepath.Join(r.workingDir, path, "avif"))
+	wd := filepath.Join(r.workingDir, path)
+
+	files, _ := os.ReadDir(wd)
+	filesAvif, _ := os.ReadDir(filepath.Join(wd, "avif"))
+	filesWebp, _ := os.ReadDir(filepath.Join(wd, "webp"))
 
 	filterFunc := func(file fs.DirEntry) bool {
 		mimeType := mime.TypeByExtension(filepath.Ext(file.Name()))
@@ -51,6 +59,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 
 	resOrig := make([]string, len(files))
 	resAvif := make([]string, len(filesAvif))
+	resWebp := make([]string, len(filesWebp))
 
 	for i, file := range files {
 		if !file.IsDir() {
@@ -59,41 +68,38 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	}
 
 	// Lazy convert all pictures
-	go workers.Avifier(filepath.Join(r.workingDir, path), resOrig)
+	go workers.Converter(wd, resOrig, imageFormat)
 
 	for i, file := range filesAvif {
 		if !file.IsDir() {
-			if filepath.Ext(file.Name()) == ".avif" {
-				resAvif[i] = fmt.Sprintf("/avif/%s", file.Name())
-				continue
-			}
+			resAvif[i] = fmt.Sprintf("/avif/%s", file.Name())
 		}
 	}
 
-	sortFunc := func(i, j int, v []string) bool {
-		idx1, err := utils.GetImageIndex(v[i])
-		if err != nil {
-			return false
+	for i, file := range filesWebp {
+		if !file.IsDir() {
+			resWebp[i] = fmt.Sprintf("/webp/%s", file.Name())
 		}
-		idx2, err := utils.GetImageIndex(v[j])
-		if err != nil {
-			return false
-		}
-		return idx1 < idx2
 	}
 
 	sort.SliceStable(resOrig, func(i, j int) bool {
-		return sortFunc(i, j, resOrig)
+		return utils.FilesSortFunc(i, j, resOrig)
 	})
 
 	sort.SliceStable(resAvif, func(i, j int) bool {
-		return sortFunc(i, j, resAvif)
+		return utils.FilesSortFunc(i, j, resAvif)
+	})
+
+	sort.SliceStable(resWebp, func(i, j int) bool {
+		return utils.FilesSortFunc(i, j, resWebp)
 	})
 
 	content := domain.Content{
-		List:          resOrig,
+		Source:        resOrig,
 		Avif:          resAvif,
+		WebP:          resWebp,
 		AvifAvailable: len(resOrig) == len(resAvif),
+		WebPAvailable: len(resOrig) == len(resWebp),
 	}
 
 	encoded, err := json.Marshal(content)

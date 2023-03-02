@@ -40,3 +40,15 @@ func GetImageIndex(filename string) (int64, error) {
 	index := strings.Trim(bracketedIndex, "()")
 	return strconv.ParseInt(index, 10, 32)
 }
+
+func FilesSortFunc(i, j int, v []string) bool {
+	idx1, err := GetImageIndex(v[i])
+	if err != nil {
+		return false
+	}
+	idx2, err := GetImageIndex(v[j])
+	if err != nil {
+		return false
+	}
+	return idx1 < idx2
+}

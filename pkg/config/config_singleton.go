@@ -16,22 +16,23 @@ var (
 )
 
 type Config struct {
-	ServerSecret      string `yaml:"serverSecret"`
-	Masterpass        string `yaml:"masterpass"`
-	CacheDir          string `yaml:"cacheDir"`
-	WorkingDir        string `yaml:"workingDir"`
-	ForceRegeneration bool   `yaml:"regenerateThumbnailsOnBoot"`
-	ThumbnailHeight   int    `yaml:"thumbnailHeight"`
-	ThumbnailQuality  int    `yaml:"thumbnailQuality"`
-	Port              int    `yaml:"port"`
-	UseMySQL          bool   `yaml:"useMySQL"`
-	MysqlUser         string `yaml:"mysqlUser"`
-	MysqlPass         string `yaml:"mysqlPass"`
-	MysqlAddr         string `yaml:"mysqlAddr"`
-	MysqlPort         string `yaml:"mysqlPort"`
-	MysqlDBName       string `yaml:"mysqlDBName"`
-	RedisAddr         string `yaml:"redisAddr"`
-	RedisPass         string `yaml:"redisPass"`
+	ServerSecret            string `yaml:"serverSecret"`
+	Masterpass              string `yaml:"masterpass"`
+	CacheDir                string `yaml:"cacheDir"`
+	WorkingDir              string `yaml:"workingDir"`
+	ForceRegeneration       bool   `yaml:"regenerateThumbnailsOnBoot"`
+	ThumbnailHeight         int    `yaml:"thumbnailHeight"`
+	ThumbnailQuality        int    `yaml:"thumbnailQuality"`
+	Port                    int    `yaml:"port"`
+	UseMySQL                bool   `yaml:"useMySQL"`
+	MysqlUser               string `yaml:"mysqlUser"`
+	MysqlPass               string `yaml:"mysqlPass"`
+	MysqlAddr               string `yaml:"mysqlAddr"`
+	MysqlPort               string `yaml:"mysqlPort"`
+	MysqlDBName             string `yaml:"mysqlDBName"`
+	RedisAddr               string `yaml:"redisAddr"`
+	RedisPass               string `yaml:"redisPass"`
+	ImageOptimizationFormat string `yaml:"imageOptimizationFormat"`
 }
 
 func Instance() *Config {
