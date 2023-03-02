@@ -13,14 +13,23 @@ export default function Login() {
     navigate('/')
   }
 
+  const detectEnterKey = (event) => {
+    if (event.key === 'Enter') {
+      performLogin()
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <Logo />
       <div className="mt-6 flex justify-center items-center">
-        <input className="bg-neutral-800 rounded-l text-xl h-10 w-64 text-center" type="password" onChange={
-          (e) => setPassword(e.target.value)
-        } />
-        <button className="h-10 bg-blue-400 p-2 rounded-r" onClick={performLogin}>Login</button>
+        <input className="bg-neutral-800 rounded-l text-xl h-10 w-64 text-center" type="password"
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={detectEnterKey}
+        />
+        <button className="h-10 bg-blue-400 p-2 rounded-r" onClick={performLogin} >
+          Login
+        </button>
       </div>
     </div>
   )
