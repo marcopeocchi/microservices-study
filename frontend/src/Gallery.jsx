@@ -64,11 +64,14 @@ export default function Gallery() {
 
       if (data.avifAvailable) {
         setGalleryData(data.avif)
-      } else if (data.webp) {
-        setGalleryData(data.source)
-      } else {
-        setGalleryData(data.source)
+        return
       }
+      if (data.webpAvailable) {
+        setGalleryData(data.webp)
+        return
+      }
+      setGalleryData(data.source)
+      return
     })();
   }, [galleryTitle])
 
