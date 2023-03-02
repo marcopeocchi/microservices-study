@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/utils"
 	"log"
 	"os"
@@ -14,7 +15,7 @@ import (
 )
 
 var (
-	pipeline = make(chan int, runtime.NumCPU()-1)
+	pipeline = make(chan int, maxParallelizationGrade())
 	quality  = 80
 )
 
@@ -60,4 +61,22 @@ func Converter(workingDir string, images []string, format string) {
 
 	stop := time.Since(start)
 	log.Println("Completed", workingDir, format, "conversion in", stop)
+}
+
+func maxParallelizationGrade() int {
+	cores := runtime.NumCPU()
+	format := config.Instance().ImageOptimizationFormat
+	if cores == 1 {
+		return 1
+	}
+	if cores <= 2 && format == FormatAvif {
+		return 1
+	}
+	if cores <= 2 && format == FormatWebP {
+		return 2
+	}
+	if cores > 2 && format == FormatAvif {
+		return 1
+	}
+	return cores
 }
