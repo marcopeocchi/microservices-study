@@ -200,7 +200,7 @@ export default function Gallery() {
         <div className="flex justify-center">
           <div className={clsx(
             showCounter ? 'block' : 'hidden',
-            'font-semibold text-5xl text-pink-400'
+            'font-semibold text-5xl text-blue-400'
           )}>
             {Number(currentIndex) + 1} / {galleryData.length}
           </div>

@@ -19,7 +19,7 @@ export function SearchModal({ show, inputRef, hideCallback }) {
             </div>
             <input
               type="text"
-              className='bg-neutral-800 text-neutral-300 w-80 px-2.5 py-2 rounded border-2 placeholder:text-neutral-500 focus:outline-0 border-pink-400 appearance-none'
+              className='bg-neutral-800 text-neutral-300 w-80 px-2.5 py-2 rounded border-2 placeholder:text-neutral-500 focus:outline-0 border-blue-400 appearance-none'
               placeholder='Filter album'
               ref={inputRef}
             />

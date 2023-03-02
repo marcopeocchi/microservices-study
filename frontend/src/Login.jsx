@@ -20,7 +20,7 @@ export default function Login() {
         <input className="bg-neutral-800 rounded-l text-xl h-10 w-64 text-center" type="password" onChange={
           (e) => setPassword(e.target.value)
         } />
-        <button className="h-10 bg-pink-400 p-2 rounded-r" onClick={performLogin}>Login</button>
+        <button className="h-10 bg-blue-400 p-2 rounded-r" onClick={performLogin}>Login</button>
       </div>
     </div>
   )

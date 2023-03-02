@@ -4,11 +4,11 @@ import { getHostThumbnails } from "../utils";
 export default function Thumbnail({ entry, isHidden }) {
   return (
     <Link to={`/gallery/${entry.name}`}>
-      <div className='mb-3 hover:text-pink-400 duration-75 cursor-pointer text-center'>
+      <div className='mb-3 hover:text-blue-400 duration-75 cursor-pointer text-center'>
         {!isHidden ?
           <img
             alt=''
-            className='rounded hover:border-2 hover:border-pink-400 duration-75'
+            className='rounded hover:border-2 border-blue-400 duration-75'
             loading='lazy'
             src={`${getHostThumbnails()}/${entry.thumbnail}`}
             style={{
@@ -22,7 +22,7 @@ export default function Thumbnail({ entry, isHidden }) {
             height: "400px",
             cursor: "pointer"
           }}
-            className="bg-neutral-800 rounded hover:border-2 duration-75">
+            className="bg-neutral-800 rounded hover:border-2 border-blue-400 duration-75">
           </div>
         }
         <div className='mt-2 fw-semibold'>

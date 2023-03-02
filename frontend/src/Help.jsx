@@ -6,7 +6,7 @@ export default function Help() {
 
   return (
     <div className="container mx-auto p-8">
-      <div className="text-5xl font-extrabold text-pink-400">
+      <div className="text-5xl font-extrabold text-blue-400">
         Help
       </div>
       <Button className="w-16 my-6" onClick={() => navigate('/')}>Back</Button>
@@ -20,16 +20,16 @@ export default function Help() {
         Gallery mode shortcuts
       </div>
       <div>
-        <code className="bg-neutral-800 p-1 rounded text-pink-400">V</code> &rarr; Vertical Split / Split view
+        <code className="bg-neutral-800 p-1 rounded text-blue-400">V</code> &rarr; Vertical Split / Split view
       </div>
       <div>
-        <code className="bg-neutral-800 p-1 rounded text-pink-400">S</code> &rarr; Span horizontally
+        <code className="bg-neutral-800 p-1 rounded text-blue-400">S</code> &rarr; Span horizontally
       </div>
       <div>
-        <code className="bg-neutral-800 p-1 rounded text-pink-400">P</code> &rarr; Start/Stop slideshow
+        <code className="bg-neutral-800 p-1 rounded text-blue-400">P</code> &rarr; Start/Stop slideshow
       </div>
       <div className="mt-2">
-        <code className="bg-neutral-800 p-1 rounded text-pink-400">Backspace</code> &rarr; Go back
+        <code className="bg-neutral-800 p-1 rounded text-blue-400">Backspace</code> &rarr; Go back
       </div>
     </div>
   )
