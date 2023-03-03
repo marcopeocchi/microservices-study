@@ -4,9 +4,6 @@ type: exec
 name: Fuu Local deploy
 
 steps:
-- name: Prepare build environment
-  commands:
-  - /usr/local/go/bin/go install github.com/google/wire/cmd/wire@latest
 - name: Transpile frontend
   commands:
   - cd frontend
