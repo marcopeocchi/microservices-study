@@ -123,7 +123,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	}
 
 	// Write-through caching
-	r.logger.Info(
+	r.logger.Infow(
 		"caching resources",
 		"mode", "write-through",
 		"ttl", time.Second*30,

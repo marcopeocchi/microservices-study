@@ -26,13 +26,11 @@ const (
 )
 
 func Converter(workingDir string, images []string, format string, logger *zap.SugaredLogger) {
-	os.Mkdir(filepath.Join(workingDir, format), os.ModePerm)
+	err := os.Mkdir(filepath.Join(workingDir, format), os.ModePerm)
 
-	// if os.IsExist(err) {
-	// 	log.Println(workingDir, "already contains optimized elements")
-	// 	log.Println(err.Error())
-	// 	return
-	// }
+	if os.IsExist(err) {
+		return
+	}
 
 	start := time.Now()
 	logger.Infow(
