@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
-	repo domain.UserRepository
+	repo   domain.UserRepository
+	logger *zap.SugaredLogger
 }
 
 func (s *Service) Login(ctx context.Context, username, password string) (*string, error) {
@@ -27,7 +29,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*string
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("password bcrypt hash does not match")
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

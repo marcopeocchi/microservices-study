@@ -7,10 +7,13 @@ import (
 	"fuu/v/pkg/domain"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type Handler struct {
 	service domain.UserService
+	logger  *zap.SugaredLogger
 }
 
 type loginRequest struct {
@@ -37,12 +40,14 @@ func (h *Handler) Login() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			h.logger.Errorw("Decoding error", "error", err)
 			return
 		}
 
 		token, err := h.service.Login(ctx, req.Username, req.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			h.logger.Warnw("Invalid credentials", "error", err)
 			return
 		}
 

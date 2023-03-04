@@ -8,12 +8,14 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type Repository struct {
-	db  *gorm.DB
-	rdb *redis.Client
+	db     *gorm.DB
+	rdb    *redis.Client
+	logger *zap.SugaredLogger
 }
 
 func (r *Repository) Count(ctx context.Context) (int64, error) {
@@ -61,6 +63,7 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 }
 
 func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*[]domain.Directory, error) {
+	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
 	_range := new([]domain.Directory)
 
 	var _order string

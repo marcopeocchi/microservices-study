@@ -4,7 +4,6 @@ import (
 	"fmt"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/utils"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -24,17 +25,22 @@ const (
 	FormatWebP string = "webp"
 )
 
-func Converter(workingDir string, images []string, format string) {
-	err := os.Mkdir(filepath.Join(workingDir, format), os.ModePerm)
+func Converter(workingDir string, images []string, format string, logger *zap.SugaredLogger) {
+	os.Mkdir(filepath.Join(workingDir, format), os.ModePerm)
 
-	if os.IsExist(err) {
-		log.Println(workingDir, "already contains optimized elements")
-		log.Println(err.Error())
-		return
-	}
+	// if os.IsExist(err) {
+	// 	log.Println(workingDir, "already contains optimized elements")
+	// 	log.Println(err.Error())
+	// 	return
+	// }
 
 	start := time.Now()
-	log.Println("Requested", workingDir, format, "conversion")
+	logger.Infow(
+		"requested images coversion",
+		"path", workingDir,
+		"count", len(images),
+		"format", format,
+	)
 
 	wg := new(sync.WaitGroup)
 	wg.Add(len(images))
@@ -60,7 +66,13 @@ func Converter(workingDir string, images []string, format string) {
 	wg.Wait()
 
 	stop := time.Since(start)
-	log.Println("Completed", workingDir, format, "conversion in", stop)
+	logger.Infow(
+		"completed images coversion",
+		"path", workingDir,
+		"count", len(images),
+		"format", format,
+		"elapsed", stop,
+	)
 }
 
 func maxParallelizationGrade() int {

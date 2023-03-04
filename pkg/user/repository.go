@@ -4,11 +4,13 @@ import (
 	"context"
 	"fuu/v/pkg/domain"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type Repository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *zap.SugaredLogger
 }
 
 func (r *Repository) FindById(ctx context.Context, id uint) (domain.User, error) {

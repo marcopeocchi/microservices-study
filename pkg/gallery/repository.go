@@ -17,10 +17,12 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/marcopeocchi/fazzoletti/slices"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 type Repository struct {
 	rdb        *redis.Client
+	logger     *zap.SugaredLogger
 	workingDir string
 }
 
@@ -32,12 +34,17 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	cached, _ := r.rdb.Get(ctx, path).Bytes()
 
 	if len(cached) > 0 {
+		r.logger.Infow("retrieved cached", "path", path)
+
 		res := domain.Content{}
 		err := json.Unmarshal(cached, &res)
 		res.Cached = true
 
 		return res, err
 	}
+
+	start := time.Now()
+	r.logger.Infow("accessing filesystem", "path", path)
 
 	wd := filepath.Join(r.workingDir, path)
 
@@ -58,6 +65,11 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		return filterFunc(file)
 	})
 
+	r.logger.Infow(
+		"retrieved resources from filesystem",
+		"elapsed", time.Since(start),
+	)
+
 	resOrig := make([]string, len(files))
 	resAvif := make([]string, len(filesAvif))
 	resWebp := make([]string, len(filesWebp))
@@ -69,7 +81,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	}
 
 	// Lazy convert all pictures
-	go workers.Converter(wd, resOrig, imageFormat)
+	go workers.Converter(wd, resOrig, imageFormat, r.logger)
 
 	for i, file := range filesAvif {
 		if !file.IsDir() {
@@ -106,10 +118,17 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	encoded, err := json.Marshal(content)
 
 	if err != nil {
+		r.logger.Errorw("encoding error", "error", err)
 		return domain.Content{}, err
 	}
 
 	// Write-through caching
+	r.logger.Info(
+		"caching resources",
+		"mode", "write-through",
+		"ttl", time.Second*30,
+		"path", path,
+	)
 	r.rdb.SetNX(ctx, path, encoded, time.Second*30)
 
 	return content, nil

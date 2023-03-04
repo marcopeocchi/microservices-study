@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 var (
@@ -23,10 +24,11 @@ func ProvideHandler(repository domain.DirectoryRepository) *Handler {
 	return handler
 }
 
-func ProvideRepository(rdb *redis.Client, root string) *Repository {
+func ProvideRepository(rdb *redis.Client, logger *zap.SugaredLogger, root string) *Repository {
 	repositoryOnce.Do(func() {
 		repository = &Repository{
 			rdb:        rdb,
+			logger:     logger,
 			workingDir: root,
 		}
 	})

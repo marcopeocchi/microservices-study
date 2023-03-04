@@ -19,13 +19,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 var cfg = config.Instance()
 
 func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
-
 	thumbnailer := workers.Thumbnailer{
 		BaseDir:           cfg.WorkingDir,
 		ImgHeight:         cfg.ThumbnailHeight,
@@ -63,7 +63,12 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 
 	// HTTP Server
 	go func() {
-		server := createServer(cfg.Port, frontend, db, rdb)
+		// Zap logging
+		logger, _ := zap.NewProduction()
+		sugar := logger.Sugar()
+		defer logger.Sync()
+
+		server := createServer(cfg.Port, frontend, db, rdb, sugar)
 		server.ListenAndServe()
 		wg.Done()
 	}()
@@ -97,20 +102,20 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 	wg.Wait()
 }
 
-func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client) *http.Server {
+func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client, sugar *zap.SugaredLogger) *http.Server {
 	r := mux.NewRouter()
 
 	// User group router
 	ur := r.PathPrefix("/user").Subrouter()
-	ur.HandleFunc("/login", user.Container(db).Login())
-	ur.HandleFunc("/logout", user.Container(db).Logout())
+	ur.HandleFunc("/login", user.Container(db, sugar).Login())
+	ur.HandleFunc("/logout", user.Container(db, sugar).Logout())
 	ur.Use(CORS)
 
 	// Overlay functionalites router
 	or := r.PathPrefix("/overlay").Subrouter()
-	or.HandleFunc("/list", listing.Container(db, rdb).ListAllDirectories())
+	or.HandleFunc("/list", listing.Container(db, rdb, sugar).ListAllDirectories())
 	or.HandleFunc("/stream", http.HandlerFunc(static.StreamVideoFile))
-	or.HandleFunc("/gallery", gallery.Container(rdb, cfg.WorkingDir).DirectoryContent())
+	or.HandleFunc("/gallery", gallery.Container(rdb, sugar, cfg.WorkingDir).DirectoryContent())
 	or.Use(CORS)
 	or.Use(authenticated)
 
