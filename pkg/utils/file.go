@@ -32,6 +32,9 @@ func IsImage(mime string) bool {
 }
 
 func IsImagePath(path string) bool {
+	if strings.HasPrefix(".", filepath.Base(path)) {
+		return false
+	}
 	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(path)), "image")
 }
 
