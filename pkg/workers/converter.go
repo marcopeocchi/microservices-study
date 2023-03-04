@@ -80,6 +80,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 		"format", format,
 		"elapsed", stop,
 	)
+	instrumentation.TimePerOpGuage.Set(float64(stop))
 }
 
 func maxParallelizationGrade() int {
