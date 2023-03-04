@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -131,6 +132,9 @@ func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client, sugar
 	tr.Use(neuter)
 	tr.Use(serveThumbnail)
 	tr.Use(authenticated)
+
+	// Prometheus
+	r.Handle("/metrics", promhttp.Handler())
 
 	// Frontend
 	build, _ := fs.Sub(*app, "frontend/dist")
