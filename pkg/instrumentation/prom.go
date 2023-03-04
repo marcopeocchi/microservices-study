@@ -15,7 +15,7 @@ var (
 		Help: "Number of directories managed by the backend",
 	})
 	TimePerOpGuage = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "time_per_conversion",
+		Name: "time_per_conversion_ms",
 		Help: "Latest time of completed conversion",
 	})
 	OpsCounter = promauto.NewCounter(prometheus.CounterOpts{
