@@ -5,6 +5,7 @@ import (
 	"fmt"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
+	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/utils"
 	"fuu/v/pkg/workers"
 	"io/fs"
@@ -39,6 +40,8 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		res := domain.Content{}
 		err := json.Unmarshal(cached, &res)
 		res.Cached = true
+
+		instrumentation.CacheHitCounter.Add(1)
 
 		return res, err
 	}
@@ -130,6 +133,8 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		"path", path,
 	)
 	r.rdb.SetNX(ctx, path, encoded, time.Second*30)
+
+	instrumentation.CacheMissCounter.Add(1)
 
 	return content, nil
 }

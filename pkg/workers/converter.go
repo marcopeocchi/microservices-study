@@ -3,6 +3,7 @@ package workers
 import (
 	"fmt"
 	config "fuu/v/pkg/config"
+	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/utils"
 	"os"
 	"os/exec"
@@ -65,6 +66,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 			}
 			<-pipeline
 			wg.Done()
+			instrumentation.OpsCounter.Add(1)
 		}(image)
 	}
 

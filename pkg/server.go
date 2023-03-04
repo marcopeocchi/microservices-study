@@ -6,6 +6,7 @@ import (
 	"fuu/v/pkg/cli"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/gallery"
+	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/listing"
 	"fuu/v/pkg/static"
 	"fuu/v/pkg/user"
@@ -95,6 +96,8 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 
 		fileWatcher.Start()
 	}()
+
+	go instrumentation.CollectMetrics(db)
 
 	log.Println("Server started")
 
