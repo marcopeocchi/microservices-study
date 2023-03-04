@@ -31,6 +31,12 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 	if os.IsExist(err) {
 		return
 	}
+	if err != nil && !os.IsExist(err) {
+		logger.Errorw(
+			"error while creating coversion directory",
+			"error", err,
+		)
+	}
 
 	start := time.Now()
 	logger.Infow(
@@ -38,6 +44,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 		"path", workingDir,
 		"count", len(images),
 		"format", format,
+		"cores", maxParallelizationGrade(),
 	)
 
 	wg := new(sync.WaitGroup)
