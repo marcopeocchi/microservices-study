@@ -7,7 +7,7 @@ export function SearchModal({ show, inputRef, hideCallback }) {
       {show && <div className="fixed w-full min-h-screen bg-neutral-900/50" onClick={hideCallback} />}
       <div className={clsx(
         show ? 'block' : 'hidden',
-        'fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-neutral-800/80 h-1/4 w-96 rounded backdrop-blur-md'
+        'fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-neutral-800/80 h-1/4 w-96 rounded-md border-2 border-neutral-500 backdrop-blur-md'
       )}>
         <div className='flex justify-center items-center h-full text-center'>
           <div className='flex flex-col items-center'>
