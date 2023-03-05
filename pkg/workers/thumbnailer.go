@@ -189,12 +189,16 @@ func (t *Thumbnailer) prune() {
 		}
 	}
 
-	for _, entry := range *all {
-		path := filepath.Join(t.CacheDir, entry.Thumbnail)
-		_, err := os.Stat(path)
-		if os.IsNotExist(err) {
-			log.Println("Deleting", path)
-			os.Remove(path)
+	files, _ := os.ReadDir(t.CacheDir)
+	thumbs := slices.Map(*all, func(e domain.Directory) string {
+		return e.Thumbnail
+	})
+
+	for _, file := range files {
+		if !slices.Includes(thumbs, file.Name()) {
+			toRemove := filepath.Join(t.CacheDir, file.Name())
+			log.Println("Deleting", toRemove)
+			os.Remove(toRemove)
 		}
 	}
 
