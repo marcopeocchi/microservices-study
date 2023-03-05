@@ -115,6 +115,8 @@ func (t *Thumbnailer) mainThread(queue []job) {
 	pipeline := make(chan int, maxConcurrency)
 	messages := make(chan job)
 
+	format := config.Instance().ImageOptimizationFormat
+
 	go t.thumbnailRefSaver(messages)
 
 	for _, work := range queue {
@@ -128,7 +130,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 				cmd = exec.Command(
 					"convert", w.InputFile,
 					"-geometry", fmt.Sprintf("x%d", t.ImgHeight),
-					"-format", config.Instance().ImageOptimizationFormat,
+					"-format", format,
 					"-quality", strconv.Itoa(t.ImgQuality),
 					w.OutputFile,
 				)
@@ -139,7 +141,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 					"-ss", "00:00:01.000",
 					"-vframes", "1",
 					"-filter:v", fmt.Sprintf("scale=-1:%d", t.ImgHeight),
-					"-f", config.Instance().ImageOptimizationFormat,
+					"-f", format,
 					w.OutputFile,
 				)
 			}
