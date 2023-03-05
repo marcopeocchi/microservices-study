@@ -149,7 +149,7 @@ function App() {
         <div className='px-6 mx-auto'>
           <Logo />
           {!listView &&
-            <div className='grid grid-cols-2 2xl:grid-cols-7 xl:grid-cols-5 md:grid-cols-4 gap-2 pt-8 min-h-screen'>
+            <div className='grid grid-cols-1 2xl:grid-cols-7 xl:grid-cols-5 md:grid-cols-4 sm:grid-cols-2 gap-2 pt-8 min-h-screen'>
               {(list ?? []).filter(entry => entry.name !== "").map((entry) => (
                 <Thumbnail entry={entry} isHidden={hide} key={entry.name} />
               ))}
