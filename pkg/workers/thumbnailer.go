@@ -155,10 +155,6 @@ func (t *Thumbnailer) mainThread(queue []job) {
 			<-pipeline
 		}(work)
 	}
-
-	// close(messages)
-	// GC
-	pipeline = nil
 }
 
 // Execute a db query for-each message received from the channel.
