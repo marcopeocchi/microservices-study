@@ -7,10 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRole int
-
 const (
-	Standard UserRole = iota
+	Standard int = iota
 	Admin
 )
 

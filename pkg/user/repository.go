@@ -2,9 +2,11 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fuu/v/pkg/domain"
 
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -15,40 +17,58 @@ type Repository struct {
 
 func (r *Repository) FindById(ctx context.Context, id uint) (domain.User, error) {
 	u := domain.User{}
-	r.db.WithContext(ctx).First(&u, id)
-	return u, nil
+	err := r.db.WithContext(ctx).First(&u, id).Error
+	return u, err
 }
 
 func (r *Repository) FindByUsername(ctx context.Context, username string) (domain.User, error) {
 	u := domain.User{}
-	r.db.WithContext(ctx).First(&u, "username = ?", username)
-	return u, nil
+	err := r.db.WithContext(ctx).First(&u, "username = ?", username).Error
+	return u, err
 }
 
 func (r *Repository) Create(ctx context.Context, username, password string, role int) (domain.User, error) {
+	if len(password) < 4 {
+		return domain.User{}, errors.New("username must be at least 4 characters long")
+	}
+	if len(password) < 16 {
+		return domain.User{}, errors.New("password must be at least 16 characters long")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return domain.User{}, err
+	}
+
 	u := domain.User{
 		Username: username,
-		Password: password,
+		Password: string(hash),
 		Role:     role,
 	}
-	r.db.WithContext(ctx).Create(&u)
-	return u, nil
+
+	err = r.db.WithContext(ctx).Create(&u).Error
+	return u, err
 }
 
 func (r *Repository) Update(ctx context.Context, id uint, username, password string, role int) (domain.User, error) {
 	u := domain.User{}
-	r.db.WithContext(ctx).First(&u, id)
+	err := r.db.WithContext(ctx).First(&u, id).Error
+
+	if err != nil {
+		return domain.User{}, err
+	}
 
 	u.Username = username
 	u.Password = password
 	u.Role = role
 
-	r.db.WithContext(ctx).Save(&u)
-	return u, nil
+	err = r.db.WithContext(ctx).Save(&u).Error
+	return u, err
 }
 
 func (r *Repository) Delete(ctx context.Context, id uint) (domain.User, error) {
 	u := domain.User{}
-	r.db.WithContext(ctx).First(&u, id).Delete(&u, id)
-	return u, nil
+	err := r.db.WithContext(ctx).First(&u, id).Delete(&u, id).Error
+	return u, err
 }

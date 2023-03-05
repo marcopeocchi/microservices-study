@@ -8,7 +8,6 @@ import (
 	"fuu/v/pkg/gallery"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/listing"
-	"fuu/v/pkg/static"
 	"fuu/v/pkg/user"
 	"fuu/v/pkg/workers"
 	"io/fs"
@@ -113,12 +112,12 @@ func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client, sugar
 	ur := r.PathPrefix("/user").Subrouter()
 	ur.HandleFunc("/login", user.Container(db, sugar).Login())
 	ur.HandleFunc("/logout", user.Container(db, sugar).Logout())
+	ur.HandleFunc("/signup", user.Container(db, sugar).SingUp())
 	ur.Use(CORS)
 
 	// Overlay functionalites router
 	or := r.PathPrefix("/overlay").Subrouter()
 	or.HandleFunc("/list", listing.Container(db, rdb, sugar).ListAllDirectories())
-	or.HandleFunc("/stream", http.HandlerFunc(static.StreamVideoFile))
 	or.HandleFunc("/gallery", gallery.Container(rdb, sugar, cfg.WorkingDir).DirectoryContent())
 	or.Use(CORS)
 	or.Use(authenticated)

@@ -21,8 +21,8 @@ type Repository struct {
 
 func (r *Repository) Count(ctx context.Context) (int64, error) {
 	var count int64
-	r.db.WithContext(ctx).Model(&domain.Directory{}).Count(&count)
-	return count, nil
+	err := r.db.WithContext(ctx).Model(&domain.Directory{}).Count(&count).Error
+	return count, err
 }
 
 func (r *Repository) Create(ctx context.Context, path, name, thumbnail string) (domain.Directory, error) {
@@ -32,14 +32,14 @@ func (r *Repository) Create(ctx context.Context, path, name, thumbnail string) (
 		Thumbnail: thumbnail,
 		Loved:     false,
 	}
-	r.db.WithContext(ctx).Create(&m)
-	return m, nil
+	err := r.db.WithContext(ctx).Create(&m).Error
+	return m, err
 }
 
 func (r *Repository) FindByName(ctx context.Context, name string) (domain.Directory, error) {
 	m := domain.Directory{}
-	r.db.WithContext(ctx).First(&m, name)
-	return m, nil
+	err := r.db.WithContext(ctx).First(&m, name).Error
+	return m, err
 }
 
 func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domain.Directory, error) {
@@ -54,13 +54,17 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return all, nil
 	}
 
-	r.db.WithContext(ctx).Where("name LIKE ?", "%"+filter+"%").Find(all)
+	err := r.db.WithContext(ctx).Where("name LIKE ?", "%"+filter+"%").Find(all).Error
+	if err != nil {
+		return nil, err
+	}
 
 	encoded, err := json.Marshal(*all)
 	if err != nil {
 		return nil, err
 	}
-	r.rdb.SetNX(ctx, filter, encoded, time.Minute)
+	err = r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
+	r.logger.Warnw("FindAllRange", "warn", err)
 
 	instrumentation.CacheMissCounter.Add(1)
 
@@ -79,30 +83,33 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		_order = "name"
 	}
 
-	r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range)
-	return _range, nil
+	err := r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range).Error
+	return _range, err
 }
 
 func (r *Repository) FindAll(ctx context.Context) (*[]domain.Directory, error) {
 	all := new([]domain.Directory)
-	r.db.WithContext(ctx).Find(all)
-	return all, nil
+	err := r.db.WithContext(ctx).Find(all).Error
+	return all, err
 }
 
 func (r *Repository) Update(ctx context.Context, path, name, thumbnail string) (domain.Directory, error) {
 	m := domain.Directory{}
-	r.db.WithContext(ctx).First(&m)
+	err := r.db.WithContext(ctx).First(&m).Error
+	if err != nil {
+		return domain.Directory{}, err
+	}
 
 	m.Name = name
 	m.Path = path
 	m.Thumbnail = thumbnail
-	r.db.WithContext(ctx).Save(&m)
+	err = r.db.WithContext(ctx).Save(&m).Error
 
-	return m, nil
+	return m, err
 }
 
 func (r *Repository) Delete(ctx context.Context, path string) (domain.Directory, error) {
 	m := domain.Directory{}
-	r.db.WithContext(ctx).Where("path = ?", fmt.Sprintf("`%s`", path)).Delete(&domain.Directory{})
-	return m, nil
+	err := r.db.WithContext(ctx).Where("path = ?", fmt.Sprintf("`%s`", path)).Delete(&domain.Directory{}).Error
+	return m, err
 }

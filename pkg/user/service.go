@@ -46,7 +46,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*string
 func (s *Service) Create(ctx context.Context, username, password string, role int) (domain.User, error) {
 	u, err := s.repo.Create(ctx, username, password, role)
 	if err != nil {
-		return domain.User{}, nil
+		return domain.User{}, err
 	}
 	return u, nil
 }

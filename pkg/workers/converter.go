@@ -34,14 +34,14 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 	}
 	if err != nil && !os.IsExist(err) {
 		logger.Errorw(
-			"error while creating coversion directory",
+			"error while creating conversion directory",
 			"error", err,
 		)
 	}
 
 	start := time.Now()
 	logger.Infow(
-		"requested images coversion",
+		"requested images conversion",
 		"path", workingDir,
 		"count", len(images),
 		"format", format,
@@ -74,7 +74,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 
 	stop := time.Since(start)
 	logger.Infow(
-		"completed images coversion",
+		"completed images conversion",
 		"path", workingDir,
 		"count", len(images),
 		"format", format,

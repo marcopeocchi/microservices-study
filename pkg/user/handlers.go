@@ -21,6 +21,8 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
+type singupRequest = loginRequest
+
 func (h *Handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -74,5 +76,40 @@ func (h *Handler) Logout() http.HandlerFunc {
 			Value:    "",
 		}
 		http.SetCookie(w, &cookie)
+	}
+}
+
+func (h *Handler) SingUp() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		defer func() {
+			cancel()
+			r.Body.Close()
+		}()
+
+		req := singupRequest{}
+		err := json.NewDecoder(r.Body).Decode(&req)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			h.logger.Errorw("Decoding error", "error", err)
+			return
+		}
+
+		user, err := h.service.Create(
+			ctx,
+			req.Username,
+			req.Password,
+			domain.Standard,
+		)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			h.logger.Errorw("Bad request", "error", err, "req", req)
+			return
+		}
+
+		json.NewEncoder(w).Encode(user)
 	}
 }

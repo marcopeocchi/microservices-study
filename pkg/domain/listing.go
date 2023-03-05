@@ -21,7 +21,7 @@ type DirectoryEnt struct {
 
 type Directory struct {
 	ID        uint      `json:"id"`
-	Path      string    `gorm:"unique;not null" json:"path"`
+	Path      string    `json:"path" gorm:"unique;not null"`
 	Name      string    `json:"name"`
 	Loved     bool      `json:"loved"`
 	Thumbnail string    `json:"thumbnail"`
