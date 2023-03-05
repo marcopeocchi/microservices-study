@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"fuu/v/pkg/common"
+	config "fuu/v/pkg/config"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+)
+
+var (
+	thumbsFormat = strings.ToLower(config.Instance().ImageOptimizationFormat)
 )
 
 // Middleware for applying CORS policy for ALL hosts and for
@@ -40,7 +45,7 @@ func neuter(next http.Handler) http.Handler {
 // header is set.
 func serveThumbnail(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/avif")
+		w.Header().Set("Content-Type", "image/"+thumbsFormat)
 		next.ServeHTTP(w, r)
 	})
 }
