@@ -24,9 +24,14 @@ import (
 	"gorm.io/gorm"
 )
 
-var cfg = config.Instance()
+var (
+	cfg       = config.Instance()
+	logger, _ = zap.NewProduction()
+)
 
 func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
+	defer logger.Sync()
+
 	thumbnailer := workers.Thumbnailer{
 		BaseDir:           cfg.WorkingDir,
 		ImgHeight:         cfg.ThumbnailHeight,
@@ -65,9 +70,7 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 	// HTTP Server
 	go func() {
 		// Zap logging
-		logger, _ := zap.NewProduction()
 		sugar := logger.Sugar()
-		defer logger.Sync()
 
 		server := createServer(cfg.Port, frontend, db, rdb, sugar)
 		server.ListenAndServe()
@@ -107,6 +110,7 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 
 func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client, sugar *zap.SugaredLogger) *http.Server {
 	r := mux.NewRouter()
+	r.Use(loggingMiddleware)
 
 	// User group router
 	ur := r.PathPrefix("/user").Subrouter()

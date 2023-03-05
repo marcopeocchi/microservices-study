@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 )
 
 var (
@@ -96,6 +97,17 @@ func authenticated(next http.Handler) http.Handler {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info(
+			r.Method,
+			zap.Time("time", time.Now()),
+			zap.String("url", r.URL.String()),
+		)
 		next.ServeHTTP(w, r)
 	})
 }

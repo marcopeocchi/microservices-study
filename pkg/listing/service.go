@@ -39,10 +39,11 @@ func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order
 
 	for i, dir := range *dirs {
 		previews[i] = domain.DirectoryEnt{
-			Id:        dir.ID,
-			Name:      dir.Name,
-			Loved:     dir.Loved,
-			Thumbnail: dir.Thumbnail,
+			Id:           dir.ID,
+			Name:         dir.Name,
+			Loved:        dir.Loved,
+			Thumbnail:    dir.Thumbnail,
+			LastModified: dir.UpdatedAt,
 		}
 	}
 
