@@ -207,7 +207,7 @@ export default function Gallery() {
         </div>
       </footer>
       <div className="flex justify-center items-center">
-        {galleryData.length &&
+        {galleryData && galleryData.length > 0 &&
           !splitView ?
           <MediaPlayer
             onClick={handleMobileTap}
