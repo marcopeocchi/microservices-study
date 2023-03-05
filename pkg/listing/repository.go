@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"fuu/v/pkg/domain"
+	"fuu/v/pkg/instrumentation"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -42,12 +43,14 @@ func (r *Repository) FindByName(ctx context.Context, name string) (domain.Direct
 }
 
 func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domain.Directory, error) {
+	r.logger.Infow("FindAllByName", "filter", filter)
 	all := new([]domain.Directory)
 
 	cached, _ := r.rdb.Get(ctx, filter).Bytes()
 
 	if len(cached) > 0 {
 		json.Unmarshal(cached, all)
+		instrumentation.CacheHitCounter.Add(1)
 		return all, nil
 	}
 
@@ -58,6 +61,8 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return nil, err
 	}
 	r.rdb.SetNX(ctx, filter, encoded, time.Minute)
+
+	instrumentation.CacheMissCounter.Add(1)
 
 	return all, nil
 }

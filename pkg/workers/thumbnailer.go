@@ -10,9 +10,11 @@ import (
 	"runtime"
 	"strconv"
 
+	config "fuu/v/pkg/config"
 	"fuu/v/pkg/domain"
 	"fuu/v/pkg/utils"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/google/uuid"
 	"github.com/marcopeocchi/fazzoletti/slices"
 	"gorm.io/gorm"
@@ -126,7 +128,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 				cmd = exec.Command(
 					"convert", w.InputFile,
 					"-geometry", fmt.Sprintf("x%d", t.ImgHeight),
-					"-format", "avif",
+					"-format", config.Instance().ImageOptimizationFormat,
 					"-quality", strconv.Itoa(t.ImgQuality),
 					w.OutputFile,
 				)
@@ -137,7 +139,7 @@ func (t *Thumbnailer) mainThread(queue []job) {
 					"-ss", "00:00:01.000",
 					"-vframes", "1",
 					"-filter:v", fmt.Sprintf("scale=-1:%d", t.ImgHeight),
-					"-f", "avif",
+					"-f", config.Instance().ImageOptimizationFormat,
 					w.OutputFile,
 				)
 			}
@@ -174,6 +176,8 @@ func (t *Thumbnailer) prune() {
 	all := new([]domain.Directory)
 	t.Database.Find(all)
 
+	filter := bloom.NewWithEstimates(uint(len(*all)), 0.01)
+
 	log.Println("Start database prune")
 	count := 0
 
@@ -183,15 +187,14 @@ func (t *Thumbnailer) prune() {
 			t.Database.Where("path = ?", entry.Path).Delete(&domain.Directory{})
 			count++
 		}
+		if err == nil {
+			filter.AddString(entry.Thumbnail)
+		}
 	}
 
 	files, _ := os.ReadDir(t.CacheDir)
-	thumbs := slices.Map(*all, func(e domain.Directory) string {
-		return e.Thumbnail
-	})
-
 	for _, file := range files {
-		if !slices.Includes(thumbs, file.Name()) {
+		if !filter.TestString(file.Name()) && filepath.Ext(file.Name()) != ".db" {
 			toRemove := filepath.Join(t.CacheDir, file.Name())
 			log.Println("Deleting", toRemove)
 			os.Remove(toRemove)

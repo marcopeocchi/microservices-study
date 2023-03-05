@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 const (
@@ -22,11 +20,13 @@ type DirectoryEnt struct {
 }
 
 type Directory struct {
-	gorm.Model
-	Path      string `gorm:"unique;not null" json:"path"`
-	Name      string `json:"name"`
-	Loved     bool   `json:"loved"`
-	Thumbnail string `json:"thumbnail"`
+	ID        uint      `json:"id"`
+	Path      string    `gorm:"unique;not null" json:"path"`
+	Name      string    `json:"name"`
+	Loved     bool      `json:"loved"`
+	Thumbnail string    `json:"thumbnail"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type ListingRepository interface {
