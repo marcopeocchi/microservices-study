@@ -69,10 +69,7 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 
 	// HTTP Server
 	go func() {
-		// Zap logging
-		sugar := logger.Sugar()
-
-		server := createServer(cfg.Port, frontend, db, rdb, sugar)
+		server := createServer(cfg.Port, frontend, db, rdb)
 		server.ListenAndServe()
 		wg.Done()
 	}()
@@ -108,7 +105,9 @@ func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
 	wg.Wait()
 }
 
-func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client, sugar *zap.SugaredLogger) *http.Server {
+func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client) *http.Server {
+	sugar := logger.Sugar()
+
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
 

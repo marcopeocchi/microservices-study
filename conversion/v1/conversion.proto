@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package conversion.v1;
+
+option go_package = "fuu/v/gen/go/conversion/v1;conversionpb";
+
+message ConversionJob {
+  string          path     = 1;
+  string          format   = 2;
+  repeated string files    = 3;
+}

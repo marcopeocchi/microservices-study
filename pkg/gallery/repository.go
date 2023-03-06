@@ -84,7 +84,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	}
 
 	// Lazy convert all pictures
-	go workers.Converter(wd, resOrig, imageFormat, r.logger)
+	go workers.Converter(path, resOrig, imageFormat, r.logger)
 
 	for i, file := range filesAvif {
 		if !file.IsDir() {
