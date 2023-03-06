@@ -67,7 +67,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 			<-pipeline
 			wg.Done()
 			instrumentation.OpsCounter.Add(1)
-		}(image)
+		}(image[:len(image)-len(filepath.Ext(image))]) // trim extension
 	}
 
 	wg.Wait()
