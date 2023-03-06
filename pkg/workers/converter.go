@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -18,7 +17,7 @@ import (
 
 var (
 	pipeline = make(chan int, maxParallelizationGrade())
-	quality  = 80
+	quality  = "80"
 )
 
 const (
@@ -55,11 +54,12 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 		pipeline <- 1
 		go func(img string) {
 			if utils.IsImagePath(img) {
+				out := img[:len(img)-len(filepath.Ext(img))]
 				cmd := exec.Command(
 					"convert", filepath.Join(workingDir, img),
 					"-format", format,
-					"-quality", strconv.Itoa(quality),
-					filepath.Join(workingDir, format, fmt.Sprint(img, ".", format)),
+					"-quality", quality,
+					filepath.Join(workingDir, format, fmt.Sprint(out, ".", format)),
 				)
 				cmd.Start()
 				cmd.Wait()
@@ -67,7 +67,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 			<-pipeline
 			wg.Done()
 			instrumentation.OpsCounter.Add(1)
-		}(image[:len(image)-len(filepath.Ext(image))]) // trim extension
+		}(image) // trim extension
 	}
 
 	wg.Wait()
