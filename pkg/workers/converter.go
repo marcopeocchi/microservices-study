@@ -19,18 +19,6 @@ const (
 )
 
 func Converter(workingDir string, images []string, format string, logger *zap.SugaredLogger) {
-
-	// if os.IsExist(err) {
-	// 	return
-	// }
-
-	// if err != nil && !os.IsExist(err) {
-	// 	logger.Errorw(
-	// 		"error while creating conversion directory",
-	// 		"error", err,
-	// 	)
-	// }
-
 	available := []*grpc.ClientConn{}
 
 	for _, node := range config.Instance().ImageProcessors {
@@ -41,6 +29,7 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 	}
 
 	if len(available) == 0 {
+		logger.Warnw("no workers available", "found", len(available))
 		return
 	}
 
