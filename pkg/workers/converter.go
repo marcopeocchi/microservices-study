@@ -40,10 +40,11 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 		}
 	}
 
+	partitions := partition(images, len(images)/len(available))
 	wg := &sync.WaitGroup{}
-	wg.Add(len(available))
+	wg.Add(len(partitions))
 
-	for i, chunk := range partition(images, len(images)/len(available)) {
+	for i, chunk := range partitions {
 		client := conversionpb.NewConversionServiceClient(available[i%len(available)])
 
 		go func(part []string) {
