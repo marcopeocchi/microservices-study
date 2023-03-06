@@ -4,7 +4,6 @@ import (
 	"context"
 	conversionpb "fuu/v/gen/go/conversion/v1"
 	config "fuu/v/pkg/config"
-	"fuu/v/pkg/instrumentation"
 	"sync"
 	"time"
 
@@ -72,7 +71,6 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 				"elapsed", stop,
 				"remote", res,
 			)
-			instrumentation.TimePerOpGuage.Set(float64(stop / 1_000_000))
 			wg.Done()
 		}(chunk)
 	}

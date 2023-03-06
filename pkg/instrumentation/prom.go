@@ -14,14 +14,6 @@ var (
 		Name: "direcories_managed_guage",
 		Help: "Number of directories managed by the backend",
 	})
-	TimePerOpGuage = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "time_per_conversion_ms",
-		Help: "Latest time of completed conversion",
-	})
-	OpsCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "images_processed_counter",
-		Help: "Number of image processed with imagemagick",
-	})
 	CacheHitCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "cache_hit_counter",
 		Help: "Number of cache hits for listing function",
@@ -37,9 +29,7 @@ func CollectMetrics(db *gorm.DB) {
 		for {
 			var count int64
 			db.Model(&domain.Directory{}).Count(&count)
-
 			ItemsGuage.Set(float64(count))
-
 			time.Sleep(time.Second * 2)
 		}
 	}()
