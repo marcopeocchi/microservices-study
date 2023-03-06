@@ -40,6 +40,10 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 		}
 	}
 
+	if len(available) == 0 {
+		return
+	}
+
 	partitions := partition(images, len(images)/len(available))
 	wg := &sync.WaitGroup{}
 	wg.Add(len(partitions))
@@ -92,10 +96,15 @@ func Converter(workingDir string, images []string, format string, logger *zap.Su
 }
 
 func getGRPCCLient(addr string) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
+	defer cancel()
+
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
 	}
-	return grpc.Dial(addr, opts...)
+
+	return grpc.DialContext(ctx, addr, opts...)
 }
 
 func partition(arr []string, chunkSize int) (temp [][]string) {
