@@ -91,6 +91,10 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		}
 	}
 
+	onlyImgs := slices.Filter(resOrig, func(f string) bool {
+		return utils.IsImagePath(f)
+	})
+
 	// Lazy convert all pictures
 	go workers.Converter(ctx, path, resOrig, imageFormat, r.logger)
 
@@ -122,8 +126,8 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		Source:        resOrig,
 		Avif:          resAvif,
 		WebP:          resWebp,
-		AvifAvailable: len(resOrig) == len(resAvif),
-		WebPAvailable: len(resOrig) == len(resWebp),
+		AvifAvailable: len(onlyImgs) == len(resAvif),
+		WebPAvailable: len(onlyImgs) == len(resWebp),
 	}
 
 	encoded, err := json.Marshal(content)
