@@ -126,8 +126,8 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		Source:        resOrig,
 		Avif:          resAvif,
 		WebP:          resWebp,
-		AvifAvailable: len(onlyImgs) >= len(resAvif),
-		WebPAvailable: len(onlyImgs) >= len(resWebp),
+		AvifAvailable: len(resAvif) >= len(onlyImgs),
+		WebPAvailable: len(resWebp) >= len(onlyImgs),
 	}
 
 	encoded, err := json.Marshal(content)
