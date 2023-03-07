@@ -1,4 +1,4 @@
-package pkg
+package middlewares
 
 import (
 	"fmt"
@@ -13,13 +13,13 @@ import (
 )
 
 type SpaHandler struct {
-	entrypoint string
-	filesystem *fs.FS
-	routes     []string
+	Entrypoint string
+	Filesystem *fs.FS
+	Routes     []string
 }
 
 func (s *SpaHandler) AddRoute(route string) *SpaHandler {
-	s.routes = append(s.routes, route)
+	s.Routes = append(s.Routes, route)
 	return s
 }
 
@@ -35,7 +35,7 @@ func (s *SpaHandler) Handler() http.HandlerFunc {
 
 		// basically all frontend routes are needed :/
 		hasRoute := false
-		for _, route := range s.routes {
+		for _, route := range s.Routes {
 			hasRoute = strings.HasPrefix(path, route)
 			if hasRoute {
 				break
@@ -43,12 +43,12 @@ func (s *SpaHandler) Handler() http.HandlerFunc {
 		}
 
 		if path == "/" || hasRoute {
-			path = s.entrypoint
+			path = s.Entrypoint
 		}
 
 		path = strings.TrimPrefix(path, "/")
 
-		file, err := (*s.filesystem).Open(path)
+		file, err := (*s.Filesystem).Open(path)
 
 		if err != nil {
 			if os.IsNotExist(err) {

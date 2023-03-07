@@ -3,8 +3,8 @@ package gallery
 import (
 	"context"
 	"fmt"
+	"fuu/v/internal/domain"
 	config "fuu/v/pkg/config"
-	"fuu/v/pkg/domain"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/utils"
 	"fuu/v/pkg/workers"

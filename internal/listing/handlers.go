@@ -1,8 +1,8 @@
 package listing
 
 import (
+	"fuu/v/internal/domain"
 	"fuu/v/pkg/common"
-	"fuu/v/pkg/domain"
 	"net/http"
 	"strconv"
 

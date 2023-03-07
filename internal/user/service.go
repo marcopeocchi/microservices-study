@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"errors"
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"os"
 	"time"
 

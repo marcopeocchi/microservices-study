@@ -50,15 +50,12 @@ func Instance() *Config {
 }
 
 func load() *Config {
-	configFile, err := os.ReadFile("./Fuufile")
-
+	configFile, err := os.ReadFile("/etc/fuu/Fuufile")
 	if err != nil {
-		configFile, err = os.ReadFile("/etc/fuu/Fuufile")
+		overrideWithArgs()
+		configFile, err = os.ReadFile(configPath)
 		if err != nil {
-			configFile, err = os.ReadFile(configPath)
-			if err != nil {
-				log.Fatalln("cannot find config file or config file not supplied")
-			}
+			log.Fatalln("cannot find config file or config file not supplied")
 		}
 	}
 
@@ -71,8 +68,11 @@ func load() *Config {
 
 	// If nothing is provided fallback to Env variables values
 	fallbackToEnv(&config)
-	overrideWithArgs()
 	return &config
+}
+
+func GetPath() string {
+	return configPath
 }
 
 func fallbackToEnv(config *Config) {

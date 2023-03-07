@@ -6,12 +6,12 @@ name: Fuu Local deploy
 steps:
 - name: Transpile frontend
   commands:
-  - cd frontend
+  - cd cmd/server/frontend
   - pnpm i
   - pnpm build
 - name: Compile backend
   commands:
-  - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu main.go
+  - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu cmd/server/main.go
 - name: Deploy testing
   commands:
   - chmod +x ./fuu

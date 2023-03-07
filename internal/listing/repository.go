@@ -3,7 +3,7 @@ package listing
 import (
 	"context"
 	"fmt"
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"fuu/v/pkg/instrumentation"
 	"time"
 

@@ -2,8 +2,8 @@ package user
 
 import (
 	"encoding/json"
+	"fuu/v/internal/domain"
 	"fuu/v/pkg/common"
-	"fuu/v/pkg/domain"
 	"net/http"
 	"time"
 

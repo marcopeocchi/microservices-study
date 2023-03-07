@@ -2,7 +2,7 @@ package gallery
 
 import (
 	"encoding/json"
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"net/http"
 )
 

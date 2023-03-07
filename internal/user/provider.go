@@ -1,7 +1,7 @@
 package user
 
 import (
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"sync"
 
 	"go.uber.org/zap"

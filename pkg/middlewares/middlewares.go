@@ -1,4 +1,4 @@
-package pkg
+package middlewares
 
 import (
 	"fmt"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"go.uber.org/zap"
 )
 
 var (
@@ -31,7 +30,7 @@ func CORS(next http.Handler) http.Handler {
 }
 
 // Disable the file indexing of http.FileServer.
-func neuter(next http.Handler) http.Handler {
+func Neuter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
@@ -44,7 +43,7 @@ func neuter(next http.Handler) http.Handler {
 // Middleware for allowing the serve of thumbnails as they're saved as file
 // without extension. By rule thumbnails are AVIF pictures, so a Content-Type
 // header is set.
-func serveThumbnail(next http.Handler) http.Handler {
+func ServeThumbnail(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/"+thumbsFormat)
 		next.ServeHTTP(w, r)
@@ -52,7 +51,7 @@ func serveThumbnail(next http.Handler) http.Handler {
 }
 
 // Middleware for allowing only authenticated users to perform requests.
-func authenticated(next http.Handler) http.Handler {
+func Authenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// check if request came from localhost, if so disable security
 		if os.Getenv("TESTING") != "" && strings.HasPrefix(r.RemoteAddr, "[::1]") {
@@ -97,17 +96,6 @@ func authenticated(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Info(
-			r.Method,
-			zap.Time("time", time.Now()),
-			zap.String("url", r.URL.String()),
-		)
 		next.ServeHTTP(w, r)
 	})
 }

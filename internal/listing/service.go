@@ -2,7 +2,7 @@ package listing
 
 import (
 	"context"
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 
 	"go.opentelemetry.io/otel/trace"
 )

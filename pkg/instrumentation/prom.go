@@ -1,7 +1,7 @@
 package instrumentation
 
 import (
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"

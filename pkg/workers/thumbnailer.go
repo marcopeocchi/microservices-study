@@ -10,9 +10,9 @@ import (
 	"runtime"
 	"strconv"
 
+	"fuu/v/internal/domain"
 	config "fuu/v/pkg/config"
-	"fuu/v/pkg/domain"
-	"fuu/v/pkg/utils"
+	utils "fuu/v/pkg/utils"
 
 	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/google/uuid"

@@ -1,7 +1,7 @@
 package gallery
 
 import (
-	"fuu/v/pkg/domain"
+	"fuu/v/internal/domain"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
