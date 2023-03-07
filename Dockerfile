@@ -3,7 +3,7 @@ WORKDIR /usr/src/fuu
 RUN apk update && \
     apk add go nodejs npm gcc sqlite musl-dev
 COPY . .
-WORKDIR /usr/src/fuu/frontend
+WORKDIR /usr/src/fuu/cmd/server/frontend
 RUN npm i
 RUN npm run build
 WORKDIR /usr/src/fuu
@@ -15,18 +15,18 @@ COPY --from=build /usr/src/fuu /usr/bin
 
 WORKDIR /media
 VOLUME /media
+
 WORKDIR /cache
 VOLUME /cache
+
+WORKDIR /etc/fuu
+VOLUME /etc/fuu
 
 RUN apk update && \
     apk add sqlite imagemagick ffmpeg
 
-ENV MASTERPASS=adminadminadmin
-ENV JWTSECRET=secret
-ENV THUMBNAIL_HEIGHT=450
-ENV THUMBNAIL_QUALITY=75
-
 RUN chmod +x /usr/bin/fuu
 
+ENV JWTSECRET=mykingmyknight
 EXPOSE 4456
-CMD exec /usr/bin/fuu -w /media -S $SECRET -M $MASTERPASS
+CMD exec /usr/bin/fuu
