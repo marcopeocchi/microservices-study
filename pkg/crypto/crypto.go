@@ -4,12 +4,18 @@ import (
 	"crypto/aes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	config "fuu/v/pkg/config"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc/credentials"
 )
 
 var src = rand.NewSource(time.Now().UnixNano())
@@ -168,4 +174,22 @@ func GenerateRandomString(n int) string {
 	}
 
 	return sb.String()
+}
+
+func LoadTLSCreds() (credentials.TransportCredentials, error) {
+	pemServerCA, err := os.ReadFile(config.Instance().TLSCertPath)
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemServerCA) {
+		return nil, fmt.Errorf("failed to add server CA's certificate")
+	}
+
+	config := &tls.Config{
+		RootCAs: certPool,
+	}
+
+	return credentials.NewTLS(config), nil
 }

@@ -1,7 +1,6 @@
 package listing
 
 import (
-	"context"
 	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
 	"net/http"
@@ -19,9 +18,6 @@ type Handler struct {
 func (h *Handler) ListAllDirectories() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 
 		pageParam := r.URL.Query().Get("page")
 		pageSizeParam := r.URL.Query().Get("pageSize")
@@ -57,9 +53,9 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 		dirs := new([]domain.DirectoryEnt)
 
 		if filterBy != "" {
-			dirs, err = h.service.ListAllDirectoriesLike(ctx, filterBy)
+			dirs, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy)
 		} else {
-			dirs, err = h.service.ListAllDirectoriesRange(ctx, pageSize, (page-1)*pageSize, orderBy)
+			dirs, err = h.service.ListAllDirectoriesRange(r.Context(), pageSize, (page-1)*pageSize, orderBy)
 		}
 
 		if err != nil {
@@ -67,7 +63,7 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 			return
 		}
 
-		count, err := h.service.CountDirectories(ctx)
+		count, err := h.service.CountDirectories(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

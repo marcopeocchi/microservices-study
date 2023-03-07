@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +18,7 @@ const (
 	FormatWebP string = "webp"
 )
 
-func Converter(workingDir string, images []string, format string, logger *zap.SugaredLogger) {
+func Converter(ctx context.Context, workingDir string, images []string, format string, logger *zap.SugaredLogger) {
 	available := []*grpc.ClientConn{}
 
 	for _, node := range config.Instance().ImageProcessors {
@@ -86,9 +87,16 @@ func getGRPCCLient(addr string) (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
 	defer cancel()
 
+	// creds, err := crypto.LoadTLSCreds()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	}
 
 	return grpc.DialContext(ctx, addr, opts...)

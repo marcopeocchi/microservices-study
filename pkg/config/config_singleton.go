@@ -34,6 +34,8 @@ type Config struct {
 	RedisPass               string   `yaml:"redisPass"`
 	ImageOptimizationFormat string   `yaml:"imageOptimizationFormat"`
 	ImageProcessors         []string `yaml:"imageProcessors"`
+	TLSCertPath             string   `yaml:"tlsCertPath"`
+	JaegerEndpoint          string   `yaml:"jaegerEndpoint"`
 }
 
 func Instance() *Config {

@@ -18,6 +18,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/marcopeocchi/fazzoletti/slices"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -32,6 +33,13 @@ var (
 )
 
 func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Content, error) {
+	ctx, span := trace.SpanFromContext(ctx).
+		TracerProvider().
+		Tracer("fs").
+		Start(ctx, "gallery.FindByPath")
+
+	defer span.End()
+
 	cached, _ := r.rdb.Get(ctx, path).Bytes()
 
 	if len(cached) > 0 {
@@ -84,7 +92,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	}
 
 	// Lazy convert all pictures
-	go workers.Converter(path, resOrig, imageFormat, r.logger)
+	go workers.Converter(ctx, path, resOrig, imageFormat, r.logger)
 
 	for i, file := range filesAvif {
 		if !file.IsDir() {

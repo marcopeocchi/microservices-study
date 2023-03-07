@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fuu/v/pkg/common"
 	"fuu/v/pkg/domain"
@@ -25,10 +24,8 @@ type singupRequest = loginRequest
 
 func (h *Handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithCancel(context.Background())
 
 		defer func() {
-			cancel()
 			r.Body.Close()
 		}()
 
@@ -46,7 +43,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			return
 		}
 
-		token, err := h.service.Login(ctx, req.Username, req.Password)
+		token, err := h.service.Login(r.Context(), req.Username, req.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			h.logger.Warnw("Invalid credentials", "error", err)
@@ -81,10 +78,7 @@ func (h *Handler) Logout() http.HandlerFunc {
 
 func (h *Handler) SingUp() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithCancel(context.Background())
-
 		defer func() {
-			cancel()
 			r.Body.Close()
 		}()
 
@@ -98,7 +92,7 @@ func (h *Handler) SingUp() http.HandlerFunc {
 		}
 
 		user, err := h.service.Create(
-			ctx,
+			r.Context(),
 			req.Username,
 			req.Password,
 			domain.Standard,

@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -30,6 +31,8 @@ var (
 )
 
 func RunBlocking(db *gorm.DB, rdb *redis.Client, frontend *embed.FS) {
+	instrumentation.InitTracing()
+
 	defer logger.Sync()
 
 	thumbnailer := workers.Thumbnailer{
@@ -110,6 +113,7 @@ func createServer(port int, app *embed.FS, db *gorm.DB, rdb *redis.Client) *http
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
+	r.Use(otelmux.Middleware("fuu"))
 
 	// User group router
 	ur := r.PathPrefix("/user").Subrouter()
