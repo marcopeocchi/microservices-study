@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 )
 
@@ -24,11 +25,12 @@ func ProvideHandler(repository domain.DirectoryRepository) *Handler {
 	return handler
 }
 
-func ProvideRepository(rdb *redis.Client, logger *zap.SugaredLogger, root string) *Repository {
+func ProvideRepository(rdb *redis.Client, logger *zap.SugaredLogger, ch *amqp.Channel, root string) *Repository {
 	repositoryOnce.Do(func() {
 		repository = &Repository{
 			rdb:        rdb,
 			logger:     logger,
+			ch:         ch,
 			workingDir: root,
 		}
 	})

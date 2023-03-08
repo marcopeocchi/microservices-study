@@ -18,6 +18,22 @@ steps:
   - mv ./fuu /usr/bin/fuu
   - systemctl restart fuu
 
+---
+kind: pipeline
+type: exec
+name: Knight Local deploy
+
+steps:
+- name: Compile backend
+  commands:
+  - /usr/local/go/bin/go build -o knight cmd/knight/*.go
+- name: Deploy testing
+  commands:
+  - chmod +x ./knight
+  - mv ./knight /usr/bin/knight
+  - systemctl restart knight
+
+
 # Production build to docker hub
 # ---
 # kind: pipeline

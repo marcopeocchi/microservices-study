@@ -1,13 +1,14 @@
 package gallery
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"fuu/v/internal/domain"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/utils"
-	"fuu/v/pkg/workers"
 	"io/fs"
 	"mime"
 	"os"
@@ -18,12 +19,16 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/marcopeocchi/fazzoletti/slices"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/streadway/amqp"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
+const oTelName = "fuu/v/internal/gallery/repository"
+
 type Repository struct {
 	rdb        *redis.Client
+	ch         *amqp.Channel
 	logger     *zap.SugaredLogger
 	workingDir string
 }
@@ -33,11 +38,7 @@ var (
 )
 
 func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Content, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "gallery.FindByPath")
-
+	_, span := otel.Tracer(oTelName).Start(ctx, "gallery.FindByPath")
 	defer span.End()
 
 	cached, _ := r.rdb.Get(ctx, path).Bytes()
@@ -96,7 +97,36 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	})
 
 	// Lazy convert all pictures
-	go workers.Converter(ctx, path, resOrig, imageFormat, r.logger)
+	// go workers.Converter(ctx, path, resOrig, imageFormat, r.logger)
+
+	// RMQ
+	var b bytes.Buffer
+
+	for _, image := range resOrig {
+		toSend := filepath.Join(wd, image)
+
+		if err := gob.NewEncoder(&b).Encode(toSend); err != nil {
+			return domain.Content{}, err
+		}
+
+		err := r.ch.Publish(
+			"images",                // exchange
+			"gallery.event.convert", // routing key
+			false,                   // mandatory
+			false,                   // immediate
+			amqp.Publishing{
+				AppId:       "fuu",
+				ContentType: "application/x-encoding-gob",
+				Body:        b.Bytes(),
+				Timestamp:   time.Now(),
+			},
+		)
+		if err != nil {
+			return domain.Content{}, err
+		}
+		r.logger.Infow("published message", "msg", image)
+		b.Reset()
+	}
 
 	for i, file := range filesAvif {
 		if !file.IsDir() {

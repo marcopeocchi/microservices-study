@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"fuu/v/cmd/internal"
 	"fuu/v/internal/domain"
 	"fuu/v/internal/gallery"
 	"fuu/v/internal/listing"
@@ -98,6 +99,11 @@ func run() <-chan error {
 		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
 	}
 
+	rmq, err := internal.NewRabbitMQ("amqp://user:oseopilota@10.0.0.2:5672/")
+	if err != nil {
+		panic(err)
+	}
+
 	// ********** MAIN COMPONENTS GOROUTINES **********
 
 	// HTTP Server
@@ -106,6 +112,7 @@ func run() <-chan error {
 		port:  cfg.Port,
 		db:    db,
 		rdb:   rdb,
+		rmq:   rmq,
 		sugar: logger.Sugar(),
 	})
 
@@ -151,6 +158,7 @@ func run() <-chan error {
 		defer func() {
 			logger.Sync()
 			rdb.Close()
+			rmq.Close()
 			stop()
 			cancel()
 			close(errChan)
@@ -183,6 +191,7 @@ type ServerConfig struct {
 	app   *embed.FS
 	db    *gorm.DB
 	rdb   *redis.Client
+	rmq   *internal.RabbitMQ
 	sugar *zap.SugaredLogger
 }
 
@@ -190,7 +199,7 @@ func initServer(sc ServerConfig) *http.Server {
 	// Depedency injection containers
 	userContainer := user.Container(sc.db, sc.sugar)
 	listingContainer := listing.Container(sc.db, sc.rdb, sc.sugar)
-	galleryContainer := gallery.Container(sc.rdb, sc.sugar, cfg.WorkingDir)
+	galleryContainer := gallery.Container(sc.rdb, sc.sugar, sc.rmq.Channel, cfg.WorkingDir)
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
