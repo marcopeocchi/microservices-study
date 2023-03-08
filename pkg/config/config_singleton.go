@@ -36,6 +36,7 @@ type Config struct {
 	ImageProcessors         []string `yaml:"imageProcessors"`
 	TLSCertPath             string   `yaml:"tlsCertPath"`
 	JaegerEndpoint          string   `yaml:"jaegerEndpoint"`
+	RabbitMQEnpoint         string   `yaml:"rabbitMQEnpoint"`
 }
 
 func Instance() *Config {

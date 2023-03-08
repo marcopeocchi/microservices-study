@@ -99,7 +99,7 @@ func run() <-chan error {
 		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
 	}
 
-	rmq, err := internal.NewRabbitMQ("amqp://user:oseopilota@10.0.0.2:5672/")
+	rmq, err := internal.NewRabbitMQ(cfg.RabbitMQEnpoint)
 	if err != nil {
 		panic(err)
 	}

@@ -26,7 +26,7 @@ func main() {
 
 func run() (<-chan error, error) {
 	logger, _ := zap.NewProduction()
-	rmq, err := internal.NewRabbitMQ("amqp://user:oseopilota@10.0.0.2:5672/")
+	rmq, err := internal.NewRabbitMQ(os.Getenv("RMQ_ENDPOINT"))
 	if err != nil {
 		panic(err)
 	}
@@ -63,8 +63,7 @@ func run() (<-chan error, error) {
 		ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 		defer func() {
-			_ = logger.Sync()
-
+			logger.Sync()
 			rmq.Close()
 			stop()
 			cancel()

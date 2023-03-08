@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -37,12 +38,13 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 
 	pipeline <- 1
 
-	// if strings.HasSuffix(filepath.Ext(file), format) {
-	// }
-
 	if utils.IsImagePath(file) {
 		out := file[:len(file)-len(filepath.Ext(file))]
 		outfile := filepath.Join(outputDirectory, out+"."+format)
+
+		if strings.HasSuffix(filepath.Ext(file), format) {
+			os.Rename(file, outfile)
+		}
 
 		_, err := os.Stat(outfile)
 		if err == nil {
@@ -53,7 +55,7 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 		start := time.Now()
 
 		cmd := exec.Command(
-			"convert", filepath.Join(path),
+			"convert", path,
 			"-format", format,
 			"-quality", quality,
 			outfile,
