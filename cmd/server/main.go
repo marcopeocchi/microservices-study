@@ -196,7 +196,7 @@ type ServerConfig struct {
 }
 
 func initServer(sc ServerConfig) *http.Server {
-	// Depedency injection containers
+	// Dependency injection containers
 	userContainer := user.Container(sc.db, sc.sugar)
 	listingContainer := listing.Container(sc.db, sc.rdb, sc.sugar)
 	galleryContainer := gallery.Container(sc.rdb, sc.sugar, sc.rmq.Channel, cfg.WorkingDir)

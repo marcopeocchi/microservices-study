@@ -44,6 +44,8 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 
 		if strings.HasSuffix(filepath.Ext(file), format) {
 			os.Rename(file, outfile)
+			<-pipeline
+			return nil
 		}
 
 		_, err := os.Stat(outfile)
@@ -81,7 +83,7 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 			"elapsed", stop,
 		)
 	}
-	<-pipeline
 
+	<-pipeline
 	return nil
 }
