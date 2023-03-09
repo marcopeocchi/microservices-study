@@ -42,13 +42,19 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 		outfile := filepath.Join(outputDirectory, out+"."+format)
 
 		if strings.HasSuffix(filepath.Ext(file), format) {
-			os.Rename(file, outfile)
+			os.Rename(path, outfile)
 			<-pipeline
 			return nil
 		}
 
 		_, err := os.Stat(outfile)
 		if err == nil {
+			logger.Infow(
+				"converted by moving",
+				"path", path,
+				"format", format,
+			)
+
 			<-pipeline
 			return nil
 		}
