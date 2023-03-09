@@ -25,7 +25,14 @@ func main() {
 }
 
 func run() (<-chan error, error) {
-	logger, _ := zap.NewProduction()
+	zapConfig := zap.NewProductionConfig()
+	zapConfig.OutputPaths = []string{"stdout"}
+
+	if os.Getenv("LOG_PATH") != "" {
+		zapConfig.OutputPaths = []string{os.Getenv("LOG_PATH"), "stdout"}
+	}
+	logger, _ := zapConfig.Build()
+
 	rmq, err := internal.NewRabbitMQ(os.Getenv("RMQ_ENDPOINT"))
 	if err != nil {
 		panic(err)

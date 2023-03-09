@@ -34,10 +34,11 @@ import (
 	"gorm.io/gorm"
 )
 
-//go:embed frontend/dist
-var reactApp embed.FS
-var cfg = config.Instance()
-var logger, _ = zap.NewProduction()
+var (
+	//go:embed frontend/dist
+	reactApp embed.FS
+	cfg      = config.Instance()
+)
 
 func main() {
 	errChan := run()
@@ -48,6 +49,15 @@ func main() {
 }
 
 func run() <-chan error {
+	zapConfig := zap.NewProductionConfig()
+
+	zapConfig.OutputPaths = []string{"stdout"}
+	if cfg.LogPath != "" {
+		zapConfig.OutputPaths = []string{cfg.LogPath, "stdout"}
+	}
+
+	logger, _ := zapConfig.Build()
+
 	defer logger.Sync()
 
 	logger.Info("starting fuu")
@@ -193,8 +203,19 @@ func initServer(sc ServerConfig) *http.Server {
 	listingContainer := listing.Container(sc.db, sc.rdb, sc.sugar)
 	galleryContainer := gallery.Container(sc.rdb, sc.sugar, sc.rmq.Channel, cfg.WorkingDir)
 
+	lmdw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			sc.sugar.Desugar().Info(
+				r.Method,
+				zap.Time("time", time.Now()),
+				zap.String("url", r.URL.String()),
+			)
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	r := mux.NewRouter()
-	r.Use(loggingMiddleware)
+	r.Use(lmdw)
 	r.Use(otelmux.Middleware("fuu"))
 
 	// User group router
@@ -314,15 +335,4 @@ func initCacheDir() error {
 
 	cfg.CacheDir = cacheDir
 	return nil
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Info(
-			r.Method,
-			zap.Time("time", time.Now()),
-			zap.String("url", r.URL.String()),
-		)
-		next.ServeHTTP(w, r)
-	})
 }

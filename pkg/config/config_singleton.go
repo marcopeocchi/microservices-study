@@ -37,6 +37,7 @@ type Config struct {
 	TLSCertPath             string   `yaml:"tlsCertPath"`
 	JaegerEndpoint          string   `yaml:"jaegerEndpoint"`
 	RabbitMQEnpoint         string   `yaml:"rabbitMQEnpoint"`
+	LogPath                 string   `yaml:"logPath"`
 }
 
 func Instance() *Config {
