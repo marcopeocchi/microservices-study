@@ -11,6 +11,8 @@ steps:
   - pnpm build
 - name: Compile backend
   commands:
+  - /usr/local/go/bin/go get
+  - echo "Building..."
   - CGO_ENABLED=1 /usr/local/go/bin/go build -o fuu cmd/server/main.go
 - name: Deploy testing
   commands:
