@@ -8,19 +8,13 @@ import (
 	"strings"
 )
 
-const (
-	THUMBNAIL_NAME = ".thumb.webp"
-)
-
 var (
 	ValidType       = regexp.MustCompile(`(image|video)\/[\s\S]*`)
-	ImageIndexRegex = regexp.MustCompile(`\(\d+\)`)
+	imageIndexRegex = regexp.MustCompile(`\(\d+\)`)
 )
 
-// ValidFile checks if file is eligible for viewing (isn't "hidden")
-// or isn't the directory thumbnail
 func ValidFile(filename string) bool {
-	return filename != THUMBNAIL_NAME && !strings.HasPrefix(filename, ".")
+	return !strings.HasPrefix(filename, ".")
 }
 
 func IsVideo(mime string) bool {
@@ -32,14 +26,14 @@ func IsImage(mime string) bool {
 }
 
 func IsImagePath(path string) bool {
-	if strings.HasPrefix(".", filepath.Base(path)) {
+	if !ValidFile(filepath.Base(path)) {
 		return false
 	}
-	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(path)), "image")
+	return IsImage(mime.TypeByExtension(filepath.Ext(path)))
 }
 
 func GetImageIndex(filename string) (int64, error) {
-	bracketedIndex := ImageIndexRegex.FindString(filename)
+	bracketedIndex := imageIndexRegex.FindString(filename)
 	index := strings.Trim(bracketedIndex, "()")
 	return strconv.ParseInt(index, 10, 32)
 }

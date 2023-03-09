@@ -14,9 +14,7 @@ func (h *Handler) DirectoryContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		defer func() {
-			r.Body.Close()
-		}()
+		defer r.Body.Close()
 
 		dir := r.URL.Query().Get("dir")
 		content, err := h.repo.FindByPath(r.Context(), dir)

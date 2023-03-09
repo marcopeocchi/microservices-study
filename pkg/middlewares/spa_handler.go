@@ -14,11 +14,11 @@ import (
 type SpaHandler struct {
 	Entrypoint string
 	Filesystem *fs.FS
-	Routes     []string
+	routes     []string
 }
 
 func (s *SpaHandler) AddRoute(route string) *SpaHandler {
-	s.Routes = append(s.Routes, route)
+	s.routes = append(s.routes, route)
 	return s
 }
 
@@ -34,7 +34,7 @@ func (s *SpaHandler) Handler() http.HandlerFunc {
 
 		// basically all frontend routes are needed :/
 		hasRoute := false
-		for _, route := range s.Routes {
+		for _, route := range s.routes {
 			hasRoute = strings.HasPrefix(path, route)
 			if hasRoute {
 				break

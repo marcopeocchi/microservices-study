@@ -91,35 +91,6 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		return utils.IsImagePath(f)
 	})
 
-	// RMQ
-	var b bytes.Buffer
-
-	for _, image := range resOrig {
-		toSend := filepath.Join(wd, image)
-
-		if err := gob.NewEncoder(&b).Encode(toSend); err != nil {
-			return domain.Content{}, err
-		}
-
-		err := r.ch.Publish(
-			"images",                // exchange
-			"gallery.event.convert", // routing key
-			false,                   // mandatory
-			false,                   // immediate
-			amqp.Publishing{
-				AppId:       "fuu",
-				ContentType: "application/x-encoding-gob",
-				Body:        b.Bytes(),
-				Timestamp:   time.Now(),
-			},
-		)
-		if err != nil {
-			return domain.Content{}, err
-		}
-		r.logger.Infow("published message", "msg", image)
-		b.Reset()
-	}
-
 	for i, file := range filesAvif {
 		if !file.IsDir() {
 			resAvif[i] = fmt.Sprintf("/avif/%s", file.Name())
@@ -167,8 +138,39 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 		"path", path,
 	)
 	r.rdb.SetNX(ctx, path, encoded, time.Second*30)
-
 	instrumentation.CacheMissCounter.Add(1)
+
+	// Send images to RabbitMQ for processing
+	if len(resWebp) >= len(resOrig) || len(resAvif) >= len(resOrig) {
+		// reusable buffer
+		var b bytes.Buffer
+
+		for _, image := range resOrig {
+			toSend := filepath.Join(wd, image)
+
+			if err := gob.NewEncoder(&b).Encode(toSend); err != nil {
+				return domain.Content{}, err
+			}
+
+			err := r.ch.Publish(
+				"images",                // exchange
+				"gallery.event.convert", // routing key
+				false,                   // mandatory
+				false,                   // immediate
+				amqp.Publishing{
+					AppId:       "fuu",
+					ContentType: "application/x-encoding-gob",
+					Body:        b.Bytes(),
+					Timestamp:   time.Now(),
+				},
+			)
+			if err != nil {
+				return domain.Content{}, err
+			}
+			r.logger.Infow("published message", "msg", image)
+			b.Reset()
+		}
+	}
 
 	return content, nil
 }

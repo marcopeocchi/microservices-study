@@ -25,9 +25,7 @@ type singupRequest = loginRequest
 func (h *Handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		defer func() {
-			r.Body.Close()
-		}()
+		defer r.Body.Close()
 
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
