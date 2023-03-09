@@ -21,3 +21,6 @@ linuxamd64:
 
 dev:
 	go run cmd/server/main.go -c "/Users/marco/dev/homebrew/fuu/Fuufile"
+
+knight:
+	RMQ_ENDPOINT=amqp://user:oseopilota@10.0.0.2:5672/ go run cmd/knight/*.go

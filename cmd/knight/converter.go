@@ -26,7 +26,7 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 	directory := filepath.Dir(path)
 	outputDirectory := filepath.Join(directory, format)
 
-	_ = os.Mkdir(outputDirectory, os.ModePerm)
+	os.Mkdir(outputDirectory, os.ModePerm)
 
 	// logger.Infow(
 	// 	"requested images conversion",
@@ -42,19 +42,19 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 		outfile := filepath.Join(outputDirectory, out+"."+format)
 
 		if strings.HasSuffix(filepath.Ext(file), format) {
-			os.Rename(path, outfile)
+			os.Link(path, outfile)
+
+			logger.Infow(
+				"converted by moving",
+				"path", path,
+				"format", format,
+			)
 			<-pipeline
 			return nil
 		}
 
 		_, err := os.Stat(outfile)
 		if err == nil {
-			logger.Infow(
-				"converted by moving",
-				"path", path,
-				"format", format,
-			)
-
 			<-pipeline
 			return nil
 		}
