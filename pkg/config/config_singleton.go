@@ -11,7 +11,7 @@ import (
 
 var (
 	instance   *Config
-	lock       = &sync.Mutex{}
+	lock       = &sync.RWMutex{}
 	configPath string
 )
 

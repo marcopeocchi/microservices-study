@@ -1,9 +1,8 @@
 package workers
 
 import (
-	"log"
-
 	"github.com/fsnotify/fsnotify"
+	"go.uber.org/zap"
 )
 
 type FileWatcher struct {
@@ -11,23 +10,23 @@ type FileWatcher struct {
 	WorkingDir    string
 	OnFileCreated func(event string)
 	OnFileDeleted func(event string)
+	Logger        *zap.SugaredLogger
 }
 
-func (f *FileWatcher) New() {
+func (f *FileWatcher) Setup() {
 	var err error
 
 	f.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatalln(err)
+		f.Logger.Fatalln(err)
 	}
 	err = f.watcher.Add(f.WorkingDir)
 	if err != nil {
-		log.Fatal(err)
+		f.Logger.Fatalln(err)
 	}
 }
 
 func (f *FileWatcher) Start() {
-	// Start a light NON-Recursive Filesystem watcher as a background routine.
 	for {
 		select {
 		case event, ok := <-f.watcher.Events:
@@ -35,18 +34,18 @@ func (f *FileWatcher) Start() {
 				return
 			}
 			if event.Has(fsnotify.Create) {
-				log.Println("Added directory:", event.Name)
+				f.Logger.Infow("added directory", "event", event.Name)
 				f.OnFileCreated(event.Name)
 			}
 			if event.Has(fsnotify.Remove) {
-				log.Println("Removing directory:", event.Name)
+				f.Logger.Infow("removing directory", "event", event.Name)
 				f.OnFileDeleted(event.Name)
 			}
 		case err, ok := <-f.watcher.Errors:
 			if !ok {
 				return
 			}
-			log.Println("error:", err)
+			f.Logger.Errorln(err)
 		}
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"fuu/v/pkg/common"
 	config "fuu/v/pkg/config"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -92,7 +91,6 @@ func Authenticated(next http.Handler) http.Handler {
 			}
 		} else {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-			log.Println(err.Error())
 			return
 		}
 

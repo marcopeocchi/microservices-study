@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -52,11 +51,9 @@ func (s *SpaHandler) Handler() http.HandlerFunc {
 
 		if err != nil {
 			if os.IsNotExist(err) {
-				log.Println("file", path, "not found:", err)
 				http.NotFound(w, r)
 				return
 			}
-			log.Println("file", path, "cannot be read:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

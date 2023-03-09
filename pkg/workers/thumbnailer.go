@@ -2,7 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"log"
 	"mime"
 	"os"
 	"os/exec"
@@ -17,16 +16,17 @@ import (
 	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/google/uuid"
 	"github.com/marcopeocchi/fazzoletti/slices"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type Thumbnailer struct {
-	BaseDir           string
-	ImgHeight         int
-	ImgQuality        int
-	ForceRegeneration bool
-	CacheDir          string
-	Database          *gorm.DB
+	BaseDir    string
+	ImgHeight  int
+	ImgQuality int
+	CacheDir   string
+	Database   *gorm.DB
+	Logger     *zap.SugaredLogger
 }
 
 type job struct {
@@ -38,14 +38,13 @@ type job struct {
 	IsImage        bool
 }
 
-func (t *Thumbnailer) Start() {
+func (t *Thumbnailer) Generate() {
 	t.prune()
 
 	files, err := os.ReadDir(t.BaseDir)
-	log.Printf("Creating thumbnails for %d entries incrementally\n", len(files))
 
 	if err != nil {
-		log.Fatal(err)
+		t.Logger.Fatalln(err)
 	}
 
 	workQueue := make([]job, len(files))
@@ -56,16 +55,7 @@ func (t *Thumbnailer) Start() {
 			workingDir := filepath.Join(t.BaseDir, current)
 			content, err := os.ReadDir(filepath.Join(t.BaseDir, current))
 			if err != nil {
-				log.Fatal(err)
-			}
-
-			if !t.ForceRegeneration {
-				var row domain.Directory
-				t.Database.First(&row, "path = ?", workingDir)
-
-				if row.Thumbnail != "" {
-					continue
-				}
+				t.Logger.Fatalln(err)
 			}
 
 			for _, f := range content {
@@ -74,7 +64,7 @@ func (t *Thumbnailer) Start() {
 
 					uuid, err := uuid.NewRandom()
 					if err != nil {
-						log.Fatalln("cannot generate id for thumbnail")
+						t.Logger.Fatalln(err)
 					}
 
 					workQueue[i] = job{
@@ -108,8 +98,11 @@ func (t *Thumbnailer) Remove(dirpath string) {
 func (t *Thumbnailer) mainThread(queue []job) {
 	// generate n thumbnails at time where n is core number
 	maxConcurrency := runtime.NumCPU()
-	log.Printf("Starting thumbnailer on %d cores\n", maxConcurrency)
-	log.Println(len(queue), "directories needs a thumbnail")
+	t.Logger.Infow(
+		"starting thumbnailer",
+		"cores", maxConcurrency,
+		"directories", len(queue),
+	)
 
 	// block if guard channel is filled with n jobs
 	pipeline := make(chan int, maxConcurrency)
@@ -147,12 +140,12 @@ func (t *Thumbnailer) mainThread(queue []job) {
 			}
 			err := cmd.Start()
 			if err != nil {
-				log.Panicln(err)
+				t.Logger.Fatalln(err)
 			}
 			// join
 			err = cmd.Wait()
 			if err == nil {
-				log.Println("Generated thumbnail for", w.InputFile)
+				t.Logger.Infow("generated thumbnail", "file", w.InputFile)
 			}
 			// Save to db
 			messages <- w
@@ -166,11 +159,13 @@ func (t *Thumbnailer) mainThread(queue []job) {
 // A transaction setup to ensure the lock of the db.
 func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
 	for w := range messages {
-		t.Database.Create(&domain.Directory{
-			Name:      w.WorkingDirName,
-			Path:      w.WorkingDirPath,
-			Thumbnail: w.Id,
-		})
+		if w.Id != "" {
+			t.Database.Create(&domain.Directory{
+				Name:      w.WorkingDirName,
+				Path:      w.WorkingDirPath,
+				Thumbnail: w.Id,
+			})
+		}
 	}
 }
 
@@ -180,7 +175,7 @@ func (t *Thumbnailer) prune() {
 
 	filter := bloom.NewWithEstimates(uint(len(*all)), 0.01)
 
-	log.Println("Start database prune")
+	t.Logger.Infoln("started database prune")
 	count := 0
 
 	for _, entry := range *all {
@@ -198,10 +193,10 @@ func (t *Thumbnailer) prune() {
 	for _, file := range files {
 		if !filter.TestString(file.Name()) && filepath.Ext(file.Name()) != ".db" {
 			toRemove := filepath.Join(t.CacheDir, file.Name())
-			log.Println("Deleting", toRemove)
+			t.Logger.Infow("deleting dead enrty", file, toRemove)
 			os.Remove(toRemove)
 		}
 	}
 
-	log.Println("Database pruned removed", count, "rows")
+	t.Logger.Infow("finished database prune", "count", count)
 }

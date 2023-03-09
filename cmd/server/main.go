@@ -10,7 +10,6 @@ import (
 	"fuu/v/internal/gallery"
 	"fuu/v/internal/listing"
 	"fuu/v/internal/user"
-	"fuu/v/pkg/cli"
 	config "fuu/v/pkg/config"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/middlewares"
@@ -51,6 +50,8 @@ func main() {
 func run() <-chan error {
 	defer logger.Sync()
 
+	logger.Info("starting fuu")
+
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddr,
 		Password: cfg.RedisPass,
@@ -70,33 +71,31 @@ func run() <-chan error {
 	instrumentation.InitTracing()
 
 	thumbnailer := workers.Thumbnailer{
-		BaseDir:           cfg.WorkingDir,
-		ImgHeight:         cfg.ThumbnailHeight,
-		ImgQuality:        cfg.ThumbnailQuality,
-		ForceRegeneration: cfg.ForceRegeneration,
-		CacheDir:          cfg.CacheDir,
-		Database:          db,
+		BaseDir:    cfg.WorkingDir,
+		ImgHeight:  cfg.ThumbnailHeight,
+		ImgQuality: cfg.ThumbnailQuality,
+		CacheDir:   cfg.CacheDir,
+		Database:   db,
+		Logger:     logger.Sugar(),
 	}
 
 	fileWatcher := workers.FileWatcher{
 		WorkingDir: cfg.WorkingDir,
 		OnFileCreated: func(event string) {
-			thumbnailer.Start()
+			thumbnailer.Generate()
 		},
 		OnFileDeleted: func(event string) {
 			thumbnailer.Remove(event)
 		},
+		Logger: logger.Sugar(),
 	}
-	fileWatcher.New()
-
-	log.Println("Starting server")
+	fileWatcher.Setup()
 
 	// Discourage the execution of this program as SuperUser.
 	// Unless in executed docker because of obvious reasons.
 	uid := os.Getuid()
 	if uid == 0 {
-		log.Println(cli.Yellow, "You're running this program as root (UID 0)", cli.Reset)
-		log.Println(cli.Yellow, "This isn't reccomended unless you're using Docker", cli.Reset)
+		logger.Warn("you're running this program as root (UID 0)")
 	}
 
 	rmq, err := internal.NewRabbitMQ(cfg.RabbitMQEnpoint)
@@ -118,13 +117,11 @@ func run() <-chan error {
 
 	// Thumbnailer worker
 	go func() {
-		log.Println("Starting thumbnailer")
-
 		start := time.Now()
-		thumbnailer.Start()
+		thumbnailer.Generate()
 		stop := time.Since(start)
 
-		log.Println("Thumbnailer took", cli.Format(stop, cli.BgBlue))
+		logger.Info("thumbnailer", zap.Duration("time", stop))
 	}()
 
 	// Ionotify filewatcher worker
@@ -138,8 +135,6 @@ func run() <-chan error {
 
 	go instrumentation.CollectMetrics(db)
 
-	log.Println("Server started")
-
 	// gracefully shutdown
 	errChan := make(chan error, 1)
 
@@ -151,8 +146,7 @@ func run() <-chan error {
 	go func() {
 		<-ctx.Done()
 
-		logger.Info("Shutdown signal received")
-
+		logger.Info("shutdown signal received")
 		ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 		defer func() {
@@ -166,18 +160,16 @@ func run() <-chan error {
 
 		server.SetKeepAlivesEnabled(false)
 
-		if err := server.Shutdown(ctxTimeout); err != nil { //nolint: contextcheck
+		if err := server.Shutdown(ctxTimeout); err != nil {
 			errChan <- err
 		}
 
-		logger.Info("Shutdown completed")
+		logger.Info("shutdown completed")
 	}()
 
 	go func() {
-		logger.Sugar().Info("Listening and serving", "address", cfg.Port)
+		logger.Sugar().Info("Listening and serving", "port", cfg.Port)
 
-		// "ListenAndServe always returns a non-nil error. After Shutdown or Close, the returned error is
-		// ErrServerClosed."
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- err
 		}
