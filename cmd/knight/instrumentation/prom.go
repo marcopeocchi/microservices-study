@@ -18,4 +18,8 @@ var (
 		Name: "images_processed_counter",
 		Help: "Number of image processed with imagemagick",
 	})
+	HardlinkedCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "images_hardlined_counter",
+		Help: "Number of image hardlinked to convertion folder",
+	})
 )

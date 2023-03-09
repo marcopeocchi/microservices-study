@@ -44,6 +44,7 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 				"path", path,
 				"format", format,
 			)
+			instrumentation.HardlinkedCounter.Add(1)
 			<-pipeline
 			return nil
 		}

@@ -30,7 +30,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -285,17 +284,9 @@ func initDatabase() (*gorm.DB, error) {
 		cfg.MysqlDBName,
 	)
 
-	if cfg.UseMySQL {
-		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		dbPath := filepath.Join(cfg.CacheDir, "fuu.db")
-		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
-		if err != nil {
-			return nil, err
-		}
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
 	}
 
 	db.AutoMigrate(&domain.Directory{})
