@@ -62,6 +62,7 @@ func (t *Thumbnailer) Generate() {
 			t.Database.Where("path = ?", workingDir).First(&test)
 
 			if test.Thumbnail != "" {
+				test = nil
 				continue
 			}
 
@@ -177,7 +178,7 @@ func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
 }
 
 func (t *Thumbnailer) prune() {
-	all := new([]domain.Directory)
+	all := &[]domain.Directory{}
 	t.Database.Find(all)
 
 	filter := bloom.NewWithEstimates(uint(len(*all)), 0.01)
