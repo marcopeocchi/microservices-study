@@ -79,7 +79,7 @@ func (s *Server) ListenAndServe() error {
 				s.logger.Warnw("consumer", "nack", nack)
 				msg.Nack(false, nack)
 			} else {
-				s.logger.Warnw("consumer", "ack", !nack)
+				s.logger.Infow("consumer", "ack", !nack)
 				msg.Ack(false)
 			}
 		}
