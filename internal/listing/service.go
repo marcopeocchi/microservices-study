@@ -4,19 +4,17 @@ import (
 	"context"
 	"fuu/v/internal/domain"
 
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
+
+const otelName = "fuu/v/internal/listing"
 
 type Service struct {
 	repo domain.ListingRepository
 }
 
 func (s *Service) ListAllDirectories(ctx context.Context) (*[]domain.DirectoryEnt, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "listing.ListAllDirectories")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.ListAllDirectories")
 	defer span.End()
 
 	dirs, err := s.repo.FindAll(ctx)
@@ -39,11 +37,7 @@ func (s *Service) ListAllDirectories(ctx context.Context) (*[]domain.DirectoryEn
 }
 
 func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order int) (*[]domain.DirectoryEnt, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "listing.ListAllDirectoriesRange")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.ListAllDirectoriesRange")
 	defer span.End()
 
 	dirs, err := s.repo.FindAllRange(ctx, take, skip, order)
@@ -67,11 +61,7 @@ func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order
 }
 
 func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]domain.DirectoryEnt, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "listing.ListAllDirectoriesLike")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.ListAllDirectoriesLike")
 	defer span.End()
 
 	dirs, err := s.repo.FindAllByName(ctx, name)
@@ -95,11 +85,7 @@ func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]d
 }
 
 func (s *Service) CountDirectories(ctx context.Context) (int64, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "listing.CountDirectories")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.CountDirectories")
 	defer span.End()
 
 	count, err := s.repo.Count(ctx)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -20,12 +21,18 @@ type Repository struct {
 }
 
 func (r *Repository) Count(ctx context.Context) (int64, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.Count")
+	defer span.End()
+
 	var count int64
 	err := r.db.WithContext(ctx).Model(&domain.Directory{}).Count(&count).Error
 	return count, err
 }
 
 func (r *Repository) Create(ctx context.Context, path, name, thumbnail string) (domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.Create")
+	defer span.End()
+
 	m := domain.Directory{
 		Name:      name,
 		Path:      path,
@@ -37,12 +44,18 @@ func (r *Repository) Create(ctx context.Context, path, name, thumbnail string) (
 }
 
 func (r *Repository) FindByName(ctx context.Context, name string) (domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindByName")
+	defer span.End()
+
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).First(&m, name).Error
 	return m, err
 }
 
 func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllByName")
+	defer span.End()
+
 	r.logger.Infow("FindAllByName", "filter", filter)
 	all := new([]domain.Directory)
 
@@ -72,6 +85,9 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 }
 
 func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*[]domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllRange")
+	defer span.End()
+
 	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
 	_range := new([]domain.Directory)
 
@@ -88,12 +104,18 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 }
 
 func (r *Repository) FindAll(ctx context.Context) (*[]domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAll")
+	defer span.End()
+
 	all := new([]domain.Directory)
 	err := r.db.WithContext(ctx).Find(all).Error
 	return all, err
 }
 
 func (r *Repository) Update(ctx context.Context, path, name, thumbnail string) (domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.Update")
+	defer span.End()
+
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).First(&m).Error
 	if err != nil {
@@ -109,6 +131,9 @@ func (r *Repository) Update(ctx context.Context, path, name, thumbnail string) (
 }
 
 func (r *Repository) Delete(ctx context.Context, path string) (domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.Delete")
+	defer span.End()
+
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).Where("path = ?", fmt.Sprintf("`%s`", path)).Delete(&domain.Directory{}).Error
 	return m, err

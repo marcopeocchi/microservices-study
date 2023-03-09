@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"fuu/v/internal/domain"
-	config "fuu/v/pkg/config"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/utils"
 	"io/fs"
@@ -24,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const oTelName = "fuu/v/internal/gallery/repository"
+const otelName = "fuu/v/internal/gallery"
 
 type Repository struct {
 	rdb        *redis.Client
@@ -33,12 +32,8 @@ type Repository struct {
 	workingDir string
 }
 
-var (
-	imageFormat = config.Instance().ImageOptimizationFormat
-)
-
 func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Content, error) {
-	_, span := otel.Tracer(oTelName).Start(ctx, "gallery.FindByPath")
+	_, span := otel.Tracer(otelName).Start(ctx, "gallery.FindByPath")
 	defer span.End()
 
 	cached, _ := r.rdb.Get(ctx, path).Bytes()
@@ -95,9 +90,6 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	onlyImgs := slices.Filter(resOrig, func(f string) bool {
 		return utils.IsImagePath(f)
 	})
-
-	// Lazy convert all pictures
-	// go workers.Converter(ctx, path, resOrig, imageFormat, r.logger)
 
 	// RMQ
 	var b bytes.Buffer

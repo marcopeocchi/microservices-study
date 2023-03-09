@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const otelName = "fuu/v/internal/user"
 
 type Service struct {
 	repo   domain.UserRepository
@@ -19,11 +21,7 @@ type Service struct {
 }
 
 func (s *Service) Login(ctx context.Context, username, password string) (*string, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "user.Login")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "user.Login")
 	defer span.End()
 
 	u, err := s.repo.FindByUsername(ctx, username)
@@ -52,11 +50,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*string
 }
 
 func (s *Service) Create(ctx context.Context, username, password string, role int) (domain.User, error) {
-	ctx, span := trace.SpanFromContext(ctx).
-		TracerProvider().
-		Tracer("fs").
-		Start(ctx, "user.Create")
-
+	_, span := otel.Tracer(otelName).Start(ctx, "user.Create")
 	defer span.End()
 
 	u, err := s.repo.Create(ctx, username, password, role)
