@@ -141,7 +141,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 	instrumentation.CacheMissCounter.Add(1)
 
 	// Send images to RabbitMQ for processing
-	if len(resWebp) >= len(resOrig) || len(resAvif) >= len(resOrig) {
+	if len(resWebp) < len(resOrig) {
 		// reusable buffer
 		var b bytes.Buffer
 
