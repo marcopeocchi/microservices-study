@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -29,12 +28,12 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 
 	_ = os.Mkdir(outputDirectory, os.ModePerm)
 
-	logger.Infow(
-		"requested images conversion",
-		"path", path,
-		"format", format,
-		"cores", runtime.NumCPU(),
-	)
+	// logger.Infow(
+	// 	"requested images conversion",
+	// 	"path", path,
+	// 	"format", format,
+	// 	"cores", runtime.NumCPU(),
+	// )
 
 	pipeline <- 1
 
@@ -72,12 +71,13 @@ func convert(path, format string, logger *zap.SugaredLogger) error {
 		)
 
 		cmd.Wait()
+
 		stop := time.Since(start)
 		instrumentation.TimePerOpGuage.Set(float64(stop) / 1_000_000)
 		instrumentation.OpsCounter.Add(1)
 
 		logger.Infow(
-			"completed images conversion",
+			"completed image conversion",
 			"path", path,
 			"format", format,
 			"elapsed", stop,
