@@ -65,7 +65,7 @@ func run() (<-chan error, error) {
 	go func() {
 		<-ctx.Done()
 
-		logger.Info("Shutdown signal received")
+		logger.Info("hutdown signal received")
 
 		ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
@@ -81,11 +81,11 @@ func run() (<-chan error, error) {
 			errChan <- err
 		}
 
-		logger.Info("Shutdown completed")
+		logger.Info("shutdown completed")
 	}()
 
 	go func() {
-		logger.Info("Listening and serving")
+		logger.Info("listening and serving")
 
 		if err := srv.ListenAndServe(); err != nil {
 			errChan <- err

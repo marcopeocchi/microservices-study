@@ -74,11 +74,11 @@ func run() (<-chan error, error) {
 			errChan <- err
 		}
 
-		logger.Info("Shutdown completed")
+		logger.Info("shutdown completed")
 	}()
 
 	go func() {
-		logger.Info("Listening and serving")
+		logger.Info("listening and serving")
 
 		if err := srv.ListenAndServe(); err != nil {
 			errChan <- err

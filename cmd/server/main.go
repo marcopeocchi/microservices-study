@@ -178,7 +178,7 @@ func run() <-chan error {
 	}()
 
 	go func() {
-		logger.Sugar().Info("Listening and serving", "port", cfg.Port)
+		logger.Sugar().Info("listening and serving", "port", cfg.Port)
 
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- err

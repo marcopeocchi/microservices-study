@@ -53,9 +53,16 @@ func (t *Thumbnailer) Generate() {
 		if file.IsDir() {
 			current := file.Name()
 			workingDir := filepath.Join(t.BaseDir, current)
-			content, err := os.ReadDir(filepath.Join(t.BaseDir, current))
+			content, err := os.ReadDir(workingDir)
 			if err != nil {
 				t.Logger.Fatalln(err)
+			}
+
+			test := &domain.Directory{}
+			t.Database.Where("path = ?", workingDir).First(&test)
+
+			if test.Thumbnail != "" {
+				continue
 			}
 
 			for _, f := range content {
@@ -88,8 +95,8 @@ func (t *Thumbnailer) Generate() {
 }
 
 func (t *Thumbnailer) Remove(dirpath string) {
-	target := new(domain.Directory)
-	t.Database.Where("path = ?", fmt.Sprintf("`%s`", dirpath)).First(&target)
+	target := &domain.Directory{}
+	t.Database.Where("path = ?", dirpath).First(&target)
 
 	os.Remove(filepath.Join(t.CacheDir, target.Thumbnail))
 	t.Database.Delete(&target, target.ID)
@@ -193,7 +200,7 @@ func (t *Thumbnailer) prune() {
 	for _, file := range files {
 		if !filter.TestString(file.Name()) && filepath.Ext(file.Name()) != ".db" {
 			toRemove := filepath.Join(t.CacheDir, file.Name())
-			t.Logger.Infow("deleting dead enrty", file, toRemove)
+			t.Logger.Infow("deleting dead enrty", "file", toRemove)
 			os.Remove(toRemove)
 		}
 	}
