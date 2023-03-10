@@ -99,7 +99,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllRange")
 	defer span.End()
 
-	cacheKey := fmt.Sprint("findallrange", take, skip)
+	cacheKey := fmt.Sprintf("findallrange%d%d", take, skip)
 
 	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
 	_range := new([]domain.Directory)
