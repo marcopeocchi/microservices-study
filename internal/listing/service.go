@@ -19,6 +19,7 @@ func (s *Service) ListAllDirectories(ctx context.Context) (*[]domain.DirectoryEn
 
 	dirs, err := s.repo.FindAll(ctx)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -42,6 +43,7 @@ func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order
 
 	dirs, err := s.repo.FindAllRange(ctx, take, skip, order)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -66,6 +68,7 @@ func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]d
 
 	dirs, err := s.repo.FindAllByName(ctx, name)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -91,6 +94,7 @@ func (s *Service) CountDirectories(ctx context.Context) (int64, error) {
 	count, err := s.repo.Count(ctx)
 
 	if err != nil {
+		span.RecordError(err)
 		return 0, err
 	}
 

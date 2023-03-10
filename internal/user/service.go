@@ -26,15 +26,19 @@ func (s *Service) Login(ctx context.Context, username, password string) (*string
 
 	u, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if u.Username == "" {
-		return nil, errors.New("username not found")
+		err := errors.New("username not found")
+		span.RecordError(err)
+		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
+		span.RecordError(err)
 		return nil, errors.New("password bcrypt hash does not match")
 	}
 
@@ -55,6 +59,7 @@ func (s *Service) Create(ctx context.Context, username, password string, role in
 
 	u, err := s.repo.Create(ctx, username, password, role)
 	if err != nil {
+		span.RecordError(err)
 		return domain.User{}, err
 	}
 	return u, nil

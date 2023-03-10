@@ -43,6 +43,9 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 
 		res := domain.Content{}
 		err := json.Unmarshal(cached, &res)
+		if err != nil {
+			span.RecordError(err)
+		}
 		res.Cached = true
 
 		instrumentation.CacheHitCounter.Add(1)
@@ -127,6 +130,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 
 	if err != nil {
 		r.logger.Errorw("encoding error", "error", err)
+		span.RecordError(err)
 		return domain.Content{}, err
 	}
 
@@ -165,6 +169,7 @@ func (r *Repository) FindByPath(ctx context.Context, path string) (domain.Conten
 				},
 			)
 			if err != nil {
+				span.RecordError(err)
 				return domain.Content{}, err
 			}
 			r.logger.Infow("published message", "msg", image)
