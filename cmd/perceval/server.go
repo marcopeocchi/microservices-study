@@ -81,7 +81,6 @@ func (t *ThumbnailsService) GetRange(ctx context.Context, req *thumbnailspb.GetR
 	_, span := otel.Tracer(otelName).Start(ctx, "Get")
 	defer span.End()
 
-	//TODO: implementazione
 	ids, err := getManyByPath(ctx, req.Paths, t.db, t.Logger)
 	if err != nil {
 		return nil, err

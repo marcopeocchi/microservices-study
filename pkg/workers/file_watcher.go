@@ -39,16 +39,12 @@ func (f *FileWatcher) Start() {
 			if !ok {
 				return
 			}
-			if event.Has(fsnotify.Create) {
-				f.Logger.Infow("added directory", "event", event.Name)
-				f.OnFileCreated(event.Name)
-			}
 			if event.Has(fsnotify.Remove) {
 				f.Logger.Infow("removing directory", "event", event.Name)
 				f.OnFileDeleted(event.Name)
 			}
-			if event.Has(fsnotify.Chmod) {
-				f.Logger.Infow("chmod directory", "event", event.Name)
+			if event.Has(fsnotify.Create) {
+				f.Logger.Infow("added directory", "event", event.Name)
 				f.OnFileCreated(event.Name)
 			}
 		case err, ok := <-f.watcher.Errors:
@@ -61,8 +57,8 @@ func (f *FileWatcher) Start() {
 }
 
 func (f *FileWatcher) Poll() {
-	f.Logger.Infoln("started polling every 30 seconds")
-	ticker := time.NewTicker(time.Second * 30)
+	f.Logger.Infoln("started polling every 5 minutes")
+	ticker := time.NewTicker(time.Minute * 5)
 	go func() {
 		for {
 			select {
