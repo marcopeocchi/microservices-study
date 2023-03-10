@@ -2,6 +2,7 @@ package listing
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
 	"fuu/v/internal/domain"
@@ -101,7 +102,9 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllRange")
 	defer span.End()
 
-	cacheKey := fmt.Sprintf("findallrange%d%d", take, skip)
+	cacheKey := base64.StdEncoding.EncodeToString(
+		[]byte(fmt.Sprintf("findallrange%d%d%d", take, skip, order)),
+	)
 
 	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
 	_range := new([]domain.Directory)

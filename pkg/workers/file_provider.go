@@ -78,7 +78,7 @@ func (t *Thumbnailer) Generate() {
 			}
 		}
 	}
-	t.mainThread(slices.Filter(workQueue, func(entry job) bool {
+	t.send(slices.Filter(workQueue, func(entry job) bool {
 		return entry.InputFile != ""
 	}))
 	// GC
@@ -95,7 +95,7 @@ func (t *Thumbnailer) Remove(dirpath string) {
 	})
 }
 
-func (t *Thumbnailer) mainThread(queue []job) {
+func (t *Thumbnailer) send(queue []job) {
 	t.Logger.Infow(
 		"starting thumbnailer",
 		"cores", runtime.NumCPU(),
