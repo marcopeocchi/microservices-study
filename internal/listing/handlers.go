@@ -59,15 +59,18 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			count, err = h.service.CountDirectories(r.Context())
+			count = int64(len(*dirs))
 		} else {
 			dirs, err = h.service.ListAllDirectoriesRange(r.Context(), pageSize, (page-1)*pageSize, orderBy)
-			count = int64(len(*dirs))
-		}
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			count, err = h.service.CountDirectories(r.Context())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		paginator := common.Paginator[domain.DirectoryEnt]{
