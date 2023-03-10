@@ -10,7 +10,7 @@ import (
 	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
 	"fuu/v/internal/domain"
 	"fuu/v/pkg/config"
-	utils "fuu/v/pkg/utils"
+	"fuu/v/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/marcopeocchi/fazzoletti/slices"

@@ -31,20 +31,12 @@ func convert(path, folder, format string, db *gorm.DB, logger *zap.SugaredLogger
 
 	pipeline <- 1
 
-	if utils.IsImagePath(path) {
+	if utils.IsImageOrVideoPath(path) {
 		uuid := uuid.New()
 		outfile := filepath.Join(outputPath, uuid.String())
 
-		cmd := utils.GetCmd(path, outfile, format)
+		cmd, driver := utils.GetCmd(path, outfile, format)
 		cmd.Start()
-
-		logger.Infow(
-			"generating thumbnail",
-			"path", path,
-			"format", format,
-			"cores", runtime.NumCPU(),
-		)
-
 		cmd.Wait()
 
 		db.FirstOrCreate(&model.Thumbnail{
@@ -58,6 +50,7 @@ func convert(path, folder, format string, db *gorm.DB, logger *zap.SugaredLogger
 			"id", uuid.String(),
 			"path", path,
 			"format", format,
+			"driver", driver,
 			"cores", runtime.NumCPU(),
 		)
 	}

@@ -33,3 +33,12 @@ func IsImagePath(path string) bool {
 	}
 	return IsImage(mime.TypeByExtension(filepath.Ext(path)))
 }
+
+func IsImageOrVideoPath(path string) bool {
+	if !ValidFile(filepath.Base(path)) {
+		return false
+	}
+
+	mimeType := mime.TypeByExtension(filepath.Ext(path))
+	return IsImage(mimeType) || IsVideo(mimeType)
+}

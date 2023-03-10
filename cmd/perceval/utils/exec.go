@@ -4,7 +4,7 @@ import (
 	"os/exec"
 )
 
-func GetCmd(input, output, format string) *exec.Cmd {
+func GetCmd(input, output, format string) (*exec.Cmd, string) {
 	if format == "" {
 		format = "webp"
 	}
@@ -16,7 +16,7 @@ func GetCmd(input, output, format string) *exec.Cmd {
 			"-format", format,
 			"-quality", "80",
 			output,
-		)
+		), "imagemagick"
 	}
 	return exec.Command(
 		"ffmpeg",
@@ -26,6 +26,6 @@ func GetCmd(input, output, format string) *exec.Cmd {
 		"-filter:v", "scale=-1:450",
 		"-f", format,
 		output,
-	)
+	), "ffmpeg"
 
 }
