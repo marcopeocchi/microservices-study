@@ -1,6 +1,36 @@
 ---
 kind: pipeline
 type: exec
+name: knight
+
+steps:
+- name: Compile backend
+  commands:
+  - /usr/local/go/bin/go build -o knight cmd/knight/*.go
+- name: Deploy testing
+  commands:
+  - chmod +x ./knight
+  - mv ./knight /usr/bin/knight
+  - systemctl restart knight
+
+---
+kind: pipeline
+type: exec
+name: perceval
+
+steps:
+- name: Compile backend
+  commands:
+  - /usr/local/go/bin/go build -o perceval cmd/perceval/*.go
+- name: Deploy testing
+  commands:
+  - chmod +x ./perceval
+  - mv ./perceval /usr/bin/perceval
+  - systemctl restart perceval
+
+---
+kind: pipeline
+type: exec
 name: Fuu Local deploy
 
 steps:
@@ -18,35 +48,9 @@ steps:
   - mv ./fuu /usr/bin/fuu
   - systemctl restart fuu
 
----
-kind: pipeline
-type: exec
-name: Knight Local deploy
-
-steps:
-- name: Compile backend
-  commands:
-  - /usr/local/go/bin/go build -o knight cmd/knight/*.go
-- name: Deploy testing
-  commands:
-  - chmod +x ./knight
-  - mv ./knight /usr/bin/knight
-  - systemctl restart knight
-
----
-kind: pipeline
-type: exec
-name: Perceval Local deploy
-
-steps:
-- name: Compile backend
-  commands:
-  - /usr/local/go/bin/go build -o perceval cmd/perceval/*.go
-- name: Deploy testing
-  commands:
-  - chmod +x ./perceval
-  - mv ./perceval /usr/bin/perceval
-  - systemctl restart perceval
+depends_on:
+- knight
+- perceval
 
 
 # Production build to docker hub
