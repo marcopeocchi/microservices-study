@@ -12,7 +12,6 @@ import (
 	"fuu/v/pkg/config"
 	"fuu/v/pkg/utils"
 
-	"github.com/google/uuid"
 	"github.com/marcopeocchi/fazzoletti/slices"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -59,18 +58,10 @@ func (t *Thumbnailer) Generate() {
 			for _, f := range content {
 				mimeType := mime.TypeByExtension(filepath.Ext(f.Name()))
 				if utils.ValidType.MatchString(mimeType) && utils.ValidFile(f.Name()) {
-
-					uuid, err := uuid.NewRandom()
-					if err != nil {
-						t.Logger.Fatalln(err)
-					}
-
 					workQueue[i] = job{
-						Id:             uuid.String(),
 						WorkingDirName: current,
 						WorkingDirPath: workingDir,
 						InputFile:      filepath.Join(t.BaseDir, current, f.Name()),
-						OutputFile:     filepath.Join(t.CacheDir, uuid.String()),
 						IsImage:        utils.IsImage(mimeType),
 					}
 					break
@@ -114,9 +105,11 @@ func (t *Thumbnailer) send(queue []job) {
 			Folder: work.WorkingDirPath,
 			Format: format,
 		})
-		t.Database.FirstOrCreate(&domain.Directory{
-			Path: work.WorkingDirPath,
-			Name: work.WorkingDirName,
-		})
+		t.Database.
+			Where("path = ?", work.WorkingDirPath).
+			FirstOrCreate(&domain.Directory{
+				Path: work.WorkingDirPath,
+				Name: work.WorkingDirName,
+			})
 	}
 }
