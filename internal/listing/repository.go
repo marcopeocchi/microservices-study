@@ -72,6 +72,8 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 	}
 
 	err := r.db.WithContext(ctx).
+		Table("directories").
+		Select("id", "name", "loved", "directories.path", "name", "created_at", "updated_at", "thumbnails.thumbnail").
 		Joins("left join thumbnails on directories.path = thumbnails.folder").
 		Where("name LIKE ?", "%"+filter+"%").
 		Find(all).Error
@@ -87,7 +89,10 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return nil, err
 	}
 
-	r.rdb.SetNX(ctx, filter, encoded, time.Minute)
+	err = r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
+	if err != nil {
+		span.RecordError(err)
+	}
 	instrumentation.CacheMissCounter.Add(1)
 
 	return all, nil
@@ -137,6 +142,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		Order(_order).
 		Limit(take).
 		Offset(skip).
+		Where("thumbnail <> ''").
 		Find(_range).Error
 
 	if err != nil {
@@ -163,7 +169,10 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		return nil, err
 	}
 
-	r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute)
+	err = r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
+	if err != nil {
+		span.RecordError(err)
+	}
 
 	instrumentation.CacheMissCounter.Add(1)
 
