@@ -72,7 +72,11 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return all, nil
 	}
 
-	err := r.db.WithContext(ctx).Where("name LIKE ?", "%"+filter+"%").Find(all).Error
+	err := r.db.WithContext(ctx).
+		Joins("left join thumbnails on directories.path = thumbnails.folder").
+		Where("name LIKE ?", "%"+filter+"%").
+		Find(all).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +95,20 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 
 func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*[]domain.Directory, error) {
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllRange")
+	defer span.End()
+
+	cacheKey := fmt.Sprint("findallrange", take, skip)
+
+	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
+	_range := new([]domain.Directory)
+
+	cached, _ := r.rdb.Get(ctx, cacheKey).Bytes()
+
+	if len(cached) > 0 {
+		json.Unmarshal(cached, _range)
+		instrumentation.CacheHitCounter.Add(1)
+		return _range, nil
+	}
 
 	conn, err := getGrpcClient("localhost:10099")
 	if err != nil {
@@ -100,13 +118,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	}
 
 	client := thumbnailspb.NewThumbnailServiceClient(conn)
-	defer func() {
-		span.End()
-		conn.Close()
-	}()
-
-	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
-	_range := new([]domain.Directory)
+	defer conn.Close()
 
 	var _order string
 	if order == domain.OrderByDate {
@@ -143,6 +155,16 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	if err != nil {
 		return nil, err
 	}
+
+	encoded, err := json.Marshal(*_range)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
+	r.logger.Warnw("FindAllRange", "warn", err)
+
+	instrumentation.CacheMissCounter.Add(1)
 
 	return _range, err
 }
