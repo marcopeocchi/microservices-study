@@ -54,12 +54,11 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 		var dirs *[]domain.DirectoryEnt
 
 		if filterBy != "" {
-			dirs, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy, pageSize, (page-1)*pageSize)
+			dirs, count, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy, pageSize, (page-1)*pageSize)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			count = int64(len(*dirs))
 		} else {
 			dirs, err = h.service.ListAllDirectoriesRange(r.Context(), pageSize, (page-1)*pageSize, orderBy)
 			if err != nil {

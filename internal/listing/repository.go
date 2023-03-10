@@ -171,7 +171,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	return _range, err
 }
 
-func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take, skip int) (*[]domain.Directory, error) {
+func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take, skip int) (*[]domain.Directory, int64, error) {
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindLikeNameRange")
 	defer span.End()
 
@@ -187,12 +187,24 @@ func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take,
 	if len(cached) > 0 {
 		json.Unmarshal(cached, _range)
 		instrumentation.CacheHitCounter.Add(1)
-		return _range, nil
+		return _range, 0, nil
 	}
 
 	client := thumbnailspb.NewThumbnailServiceClient(r.conn)
 
+	var count int64
+
 	err := r.db.WithContext(ctx).
+		Model(&domain.Directory{}).
+		Where("name LIKE ?", "%"+filter+"%").
+		Count(&count).Error
+
+	if err != nil {
+		span.RecordError(err)
+		return nil, 0, err
+	}
+
+	err = r.db.WithContext(ctx).
 		Table("directories").
 		Select("id", "name", "loved", "directories.path", "name", "created_at", "updated_at", "thumbnails.thumbnail").
 		Joins("left join thumbnails on directories.path = thumbnails.folder").
@@ -203,7 +215,7 @@ func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take,
 
 	if err != nil {
 		span.RecordError(err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	res, err := client.GetRange(ctx, &thumbnailspb.GetRangeRequest{
@@ -216,13 +228,13 @@ func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take,
 
 	if err != nil {
 		span.RecordError(err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	encoded, err := json.Marshal(*_range)
 	if err != nil {
 		span.RecordError(err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	redisErr := r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
@@ -232,7 +244,7 @@ func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take,
 
 	instrumentation.CacheMissCounter.Add(1)
 
-	return _range, err
+	return _range, count, err
 }
 
 func (r *Repository) FindAll(ctx context.Context) (*[]domain.Directory, error) {
