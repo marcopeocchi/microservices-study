@@ -49,8 +49,8 @@ steps:
   - systemctl restart fuu
 
 depends_on:
-- knight
-- perceval
+- knight_microservice
+- perceval_microservice
 
 
 # Production build to docker hub
