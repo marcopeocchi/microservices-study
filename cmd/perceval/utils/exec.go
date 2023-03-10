@@ -5,7 +5,11 @@ import (
 )
 
 func GetCmd(input, output, format string) *exec.Cmd {
-	if IsImage(input) {
+	if format == "" {
+		format = "webp"
+	}
+
+	if IsImagePath(input) {
 		return exec.Command(
 			"convert", input,
 			"-geometry", "x450",

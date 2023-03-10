@@ -139,6 +139,10 @@ func (t *Thumbnailer) mainThread(queue []job) {
 			Folder: work.WorkingDirPath,
 			Format: format,
 		})
+		t.Database.FirstOrCreate(&domain.Directory{
+			Path: work.WorkingDirPath,
+			Name: work.WorkingDirName,
+		})
 	}
 }
 

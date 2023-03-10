@@ -77,19 +77,17 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		Find(all).Error
 
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	encoded, err := json.Marshal(*all)
 	if err != nil {
-		return nil, err
-	}
-	err = r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
-	if err != nil {
-		r.logger.Warnw("FindAllRange", "warn", err)
+		span.RecordError(err)
 		return nil, err
 	}
 
+	r.rdb.SetNX(ctx, filter, encoded, time.Minute)
 	instrumentation.CacheMissCounter.Add(1)
 
 	return all, nil
@@ -133,6 +131,8 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 
 	// err = r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range).Error
 	err = r.db.WithContext(ctx).
+		Table("directories").
+		Select("id", "name", "loved", "directories.path", "name", "created_at", "updated_at", "thumbnails.thumbnail").
 		Joins("left join thumbnails on directories.path = thumbnails.folder").
 		Order(_order).
 		Limit(take).
@@ -163,12 +163,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		return nil, err
 	}
 
-	err = r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
-	if err != nil {
-		r.logger.Warnw("FindAllRange", "warn", err)
-		span.RecordError(err)
-		return nil, err
-	}
+	r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute)
 
 	instrumentation.CacheMissCounter.Add(1)
 
@@ -191,6 +186,7 @@ func (r *Repository) Update(ctx context.Context, path, name, thumbnail string) (
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).First(&m).Error
 	if err != nil {
+		span.RecordError(err)
 		return domain.Directory{}, err
 	}
 

@@ -47,7 +47,7 @@ func convert(path, folder, format string, db *gorm.DB, logger *zap.SugaredLogger
 
 		cmd.Wait()
 
-		db.Create(&model.Thumbnail{
+		db.FirstOrCreate(&model.Thumbnail{
 			Thumbnail: uuid.String(),
 			Path:      outfile,
 			Folder:    folder,
