@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
-	"github.com/marcopeocchi/fazzoletti/slices"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -86,7 +85,10 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return nil, err
 	}
 	err = r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
-	r.logger.Warnw("FindAllRange", "warn", err)
+	if err != nil {
+		r.logger.Warnw("FindAllRange", "warn", err)
+		return nil, err
+	}
 
 	instrumentation.CacheMissCounter.Add(1)
 
@@ -114,6 +116,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	if err != nil {
 		span.End()
 		r.logger.Fatalln(err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -137,15 +140,12 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		Find(_range).Error
 
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
-	paths := slices.Map(*_range, func(d domain.Directory) string {
-		return d.Path
-	})
-
 	res, err := client.GetRange(ctx, &thumbnailspb.GetRangeRequest{
-		Paths: paths,
+		Paths: []string{},
 	})
 
 	for _, t := range res.Thumbnails {
@@ -153,16 +153,22 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	}
 
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	encoded, err := json.Marshal(*_range)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	err = r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
-	r.logger.Warnw("FindAllRange", "warn", err)
+	if err != nil {
+		r.logger.Warnw("FindAllRange", "warn", err)
+		span.RecordError(err)
+		return nil, err
+	}
 
 	instrumentation.CacheMissCounter.Add(1)
 
