@@ -41,7 +41,7 @@ name: Perceval Local deploy
 steps:
 - name: Compile backend
   commands:
-  - /usr/local/go/bin/go build -o knight cmd/perceval/*.go
+  - /usr/local/go/bin/go build -o perceval cmd/perceval/*.go
 - name: Deploy testing
   commands:
   - chmod +x ./perceval
