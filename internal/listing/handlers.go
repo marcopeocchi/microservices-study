@@ -50,20 +50,21 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 
 		filterBy := r.URL.Query().Get("filter")
 
-		dirs := new([]domain.DirectoryEnt)
+		var count int64
+		var dirs *[]domain.DirectoryEnt
 
 		if filterBy != "" {
 			dirs, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			count, err = h.service.CountDirectories(r.Context())
 		} else {
 			dirs, err = h.service.ListAllDirectoriesRange(r.Context(), pageSize, (page-1)*pageSize, orderBy)
+			count = int64(len(*dirs))
 		}
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		count, err := h.service.CountDirectories(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

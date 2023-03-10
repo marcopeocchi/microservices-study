@@ -122,7 +122,7 @@ export default function Gallery() {
   }
 
   const handleMobileTap = (event) => {
-    event.clientX > window.innerWidth / 2 ? handlePrev() : handleNext()
+    event.clientX > window.innerWidth / 2 ? handleNext() : handlePrev()
   }
 
   return (
