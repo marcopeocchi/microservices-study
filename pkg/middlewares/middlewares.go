@@ -70,7 +70,7 @@ func Authenticated(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+		token, _ := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}

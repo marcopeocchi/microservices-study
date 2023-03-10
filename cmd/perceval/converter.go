@@ -66,14 +66,26 @@ func convert(path, folder, format string, db *gorm.DB, logger *zap.SugaredLogger
 	return nil
 }
 
-func delete(path string, logger *zap.SugaredLogger) error {
+func deleteFile(ctx context.Context, path string, db *gorm.DB, logger *zap.SugaredLogger) (string, error) {
 	logger.Infow("deleting thumbnail", "path", path)
-	return nil
+	id, toDelete, err := getByPath(ctx, path, db, logger)
+
+	if id != "" {
+		db.Delete(&model.Thumbnail{}, "path = ? OR thumbnail = ?", path, id)
+		err := os.Remove(toDelete)
+		return id, err
+	}
+
+	return "", err
 }
 
-func getByPath(path string, logger *zap.SugaredLogger) (string, string, error) {
+func getByPath(ctx context.Context, path string, db *gorm.DB, logger *zap.SugaredLogger) (string, string, error) {
 	logger.Infow("requesting thumbnail", "path", path)
-	return "", "", nil
+
+	res := model.Thumbnail{}
+	err := db.WithContext(ctx).First(&res, "path = ?", path).Error
+
+	return res.Thumbnail, res.Path, err
 }
 
 func getManyByPath(ctx context.Context, paths []string, db *gorm.DB, logger *zap.SugaredLogger) (*[]model.Thumbnail, error) {

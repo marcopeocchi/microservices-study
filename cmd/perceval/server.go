@@ -45,15 +45,14 @@ func (t *ThumbnailsService) Delete(ctx context.Context, req *thumbnailspb.Delete
 	_, span := otel.Tracer(otelName).Start(ctx, "Delete")
 	defer span.End()
 
-	//TODO: implementazione
-	err := delete(req.Path, t.Logger)
+	id, err := deleteFile(ctx, req.Path, t.db, t.Logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &thumbnailspb.DeleteResponse{
 		Thumbnail: &thumbnailspb.Thumbnail{
-			Id:     "",
+			Id:     id,
 			Path:   req.Path,
 			Format: format,
 		},
@@ -64,8 +63,7 @@ func (t *ThumbnailsService) Get(ctx context.Context, req *thumbnailspb.GetReques
 	_, span := otel.Tracer(otelName).Start(ctx, "Get")
 	defer span.End()
 
-	//TODO: implementazione
-	id, path, err := getByPath(req.Path, t.Logger)
+	id, path, err := getByPath(ctx, req.Path, t.db, t.Logger)
 	if err != nil {
 		return nil, err
 	}

@@ -12,14 +12,11 @@ const (
 )
 
 var (
-	ValidType       = regexp.MustCompile(`(image|video)\/[\s\S]*`)
-	ImageIndexRegex = regexp.MustCompile(`\(\d+\)`)
+	ValidType = regexp.MustCompile(`(image|video)\/[\s\S]*`)
 )
 
-// ValidFile checks if file is eligible for viewing (isn't "hidden")
-// or isn't the directory thumbnail
 func ValidFile(filename string) bool {
-	return filename != THUMBNAIL_NAME && !strings.HasPrefix(filename, ".")
+	return !strings.HasPrefix(filename, ".")
 }
 
 func IsVideo(mime string) bool {
@@ -31,8 +28,8 @@ func IsImage(mime string) bool {
 }
 
 func IsImagePath(path string) bool {
-	if strings.HasPrefix(".", filepath.Base(path)) {
+	if !ValidFile(filepath.Base(path)) {
 		return false
 	}
-	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(path)), "image")
+	return IsImage(mime.TypeByExtension(filepath.Ext(path)))
 }

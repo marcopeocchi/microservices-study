@@ -86,11 +86,13 @@ func (t *Thumbnailer) Generate() {
 }
 
 func (t *Thumbnailer) Remove(dirpath string) {
-	target := &domain.Directory{}
-	t.Database.Where("path = ?", dirpath).First(&target)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	os.Remove(filepath.Join(t.CacheDir, target.Thumbnail))
-	t.Database.Delete(&target, target.ID)
+	client := thumbnailspb.NewThumbnailServiceClient(t.Conn)
+	client.Delete(ctx, &thumbnailspb.DeleteRequest{
+		Path: dirpath,
+	})
 }
 
 func (t *Thumbnailer) mainThread(queue []job) {
