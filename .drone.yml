@@ -1,7 +1,7 @@
 ---
 kind: pipeline
 type: exec
-name: knight
+name: knight_microservice
 
 steps:
 - name: Compile backend
@@ -16,7 +16,7 @@ steps:
 ---
 kind: pipeline
 type: exec
-name: perceval
+name: perceval_microservice
 
 steps:
 - name: Compile backend
@@ -31,7 +31,7 @@ steps:
 ---
 kind: pipeline
 type: exec
-name: Fuu Local deploy
+name: fuu_gateway
 
 steps:
 - name: Transpile frontend
