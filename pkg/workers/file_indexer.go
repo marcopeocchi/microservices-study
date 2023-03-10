@@ -84,6 +84,8 @@ func (t *Thumbnailer) Remove(dirpath string) {
 	client.Delete(ctx, &thumbnailspb.DeleteRequest{
 		Path: dirpath,
 	})
+
+	t.Database.WithContext(ctx).Delete(&domain.Directory{}, "path = ?", dirpath)
 }
 
 func (t *Thumbnailer) send(queue []job) {
@@ -105,11 +107,12 @@ func (t *Thumbnailer) send(queue []job) {
 			Folder: work.WorkingDirPath,
 			Format: format,
 		})
-		t.Database.
+		t.Database.WithContext(ctx).
 			Where("path = ?", work.WorkingDirPath).
 			FirstOrCreate(&domain.Directory{
 				Path: work.WorkingDirPath,
 				Name: work.WorkingDirName,
 			})
+
 	}
 }

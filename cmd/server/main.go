@@ -108,6 +108,7 @@ func run() <-chan error {
 		Logger: logger.Sugar(),
 	}
 	fileWatcher.Setup()
+	fileWatcher.Poll()
 
 	// Discourage the execution of this program as SuperUser.
 	// Unless in executed docker because of obvious reasons.
@@ -152,6 +153,7 @@ func run() <-chan error {
 		fileWatcher.Start()
 	}()
 
+	// collect metrics for prometheus
 	go instrumentation.CollectMetrics(db)
 
 	// gracefully shutdown
@@ -171,6 +173,7 @@ func run() <-chan error {
 		defer func() {
 			logger.Sync()
 			percevalConn.Close()
+			fileWatcher.Close()
 			rdb.Close()
 			rmq.Close()
 			stop()
@@ -188,7 +191,7 @@ func run() <-chan error {
 	}()
 
 	go func() {
-		logger.Sugar().Info("listening and serving", "port", cfg.Port)
+		logger.Sugar().Infow("listening and serving", "port", cfg.Port)
 
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- err
@@ -214,6 +217,7 @@ func initServer(sc ServerConfig) *http.Server {
 	listingContainer := listing.Container(sc.db, sc.rdb, sc.conn, sc.sugar)
 	galleryContainer := gallery.Container(sc.rdb, sc.sugar, sc.rmq.Channel, cfg.WorkingDir)
 
+	// Logging middleware
 	lmdw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			sc.sugar.Desugar().Info(
@@ -225,6 +229,7 @@ func initServer(sc ServerConfig) *http.Server {
 		})
 	}
 
+	// Router
 	r := mux.NewRouter()
 	r.Use(lmdw)
 	r.Use(otelmux.Middleware("fuu"))

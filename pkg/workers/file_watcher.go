@@ -1,8 +1,14 @@
 package workers
 
 import (
+	"time"
+
 	"github.com/fsnotify/fsnotify"
 	"go.uber.org/zap"
+)
+
+var (
+	stopPoll = make(chan struct{})
 )
 
 type FileWatcher struct {
@@ -41,6 +47,10 @@ func (f *FileWatcher) Start() {
 				f.Logger.Infow("removing directory", "event", event.Name)
 				f.OnFileDeleted(event.Name)
 			}
+			if event.Has(fsnotify.Chmod) {
+				f.Logger.Infow("chmod directory", "event", event.Name)
+				f.OnFileCreated(event.Name)
+			}
 		case err, ok := <-f.watcher.Errors:
 			if !ok {
 				return
@@ -50,6 +60,23 @@ func (f *FileWatcher) Start() {
 	}
 }
 
+func (f *FileWatcher) Poll() {
+	f.Logger.Infoln("started polling every 30 seconds")
+	ticker := time.NewTicker(time.Second * 30)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				f.OnFileCreated("")
+			case <-stopPoll:
+				f.Logger.Infoln("stopped polling")
+				ticker.Stop()
+			}
+		}
+	}()
+}
+
 func (f *FileWatcher) Close() {
-	defer f.watcher.Close()
+	f.watcher.Close()
+	stopPoll <- struct{}{}
 }
