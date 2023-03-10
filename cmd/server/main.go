@@ -108,9 +108,9 @@ func run() <-chan error {
 		Logger: logger.Sugar(),
 	}
 	fileWatcher.Setup()
-	fileWatcher.Poll()
+	// fileWatcher.Poll()
 
-	// Discourage the execution of this program as SuperUser.
+	// Discourage the execution of this program as super user.
 	// Unless in executed docker because of obvious reasons.
 	uid := os.Getuid()
 	if uid == 0 {
