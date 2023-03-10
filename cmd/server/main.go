@@ -173,7 +173,6 @@ func run() <-chan error {
 		defer func() {
 			logger.Sync()
 			percevalConn.Close()
-			fileWatcher.Close()
 			rdb.Close()
 			rmq.Close()
 			stop()

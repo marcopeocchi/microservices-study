@@ -82,10 +82,7 @@ func getByPath(ctx context.Context, path string, db *gorm.DB, logger *zap.Sugare
 }
 
 func getManyByPath(ctx context.Context, paths []string, db *gorm.DB, logger *zap.SugaredLogger) (*[]model.Thumbnail, error) {
-	logger.Infoln("requesting thumbnails")
-
 	res := new([]model.Thumbnail)
-
 	err := db.WithContext(ctx).Where(paths).Find(res).Error
 
 	return res, err

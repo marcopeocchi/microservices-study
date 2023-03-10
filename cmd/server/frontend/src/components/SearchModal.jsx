@@ -1,7 +1,14 @@
 import clsx from "clsx";
+import { useEffect } from "react";
 import { CgSearch } from "react-icons/cg";
 
 export function SearchModal({ show, inputRef, hideCallback }) {
+  useEffect(() => {
+    if (show) {
+      inputRef.current.focus()
+    }
+  }, [inputRef, show])
+
   return (
     <>
       {show && <div className="fixed w-full min-h-screen bg-neutral-900/50" onClick={hideCallback} />}
