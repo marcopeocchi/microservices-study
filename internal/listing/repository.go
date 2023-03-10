@@ -10,11 +10,9 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +20,7 @@ type Repository struct {
 	db     *gorm.DB
 	rdb    *redis.Client
 	logger *zap.SugaredLogger
+	conn   *grpc.ClientConn
 }
 
 func (r *Repository) Count(ctx context.Context) (int64, error) {
@@ -89,9 +88,9 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 		return nil, err
 	}
 
-	err = r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
+	redisErr := r.rdb.SetNX(ctx, filter, encoded, time.Minute).Err()
 	if err != nil {
-		span.RecordError(err)
+		span.RecordError(redisErr)
 	}
 	instrumentation.CacheMissCounter.Add(1)
 
@@ -115,16 +114,7 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		return _range, nil
 	}
 
-	conn, err := getGrpcClient("localhost:10099")
-	if err != nil {
-		span.End()
-		r.logger.Fatalln(err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	client := thumbnailspb.NewThumbnailServiceClient(conn)
-	defer conn.Close()
+	client := thumbnailspb.NewThumbnailServiceClient(r.conn)
 
 	var _order string
 	if order == domain.OrderByDate {
@@ -134,15 +124,14 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		_order = "name"
 	}
 
-	// err = r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range).Error
-	err = r.db.WithContext(ctx).
+	err := r.db.WithContext(ctx).
 		Table("directories").
 		Select("id", "name", "loved", "directories.path", "name", "created_at", "updated_at", "thumbnails.thumbnail").
 		Joins("left join thumbnails on directories.path = thumbnails.folder").
 		Order(_order).
 		Limit(take).
 		Offset(skip).
-		Where("thumbnail <> ''").
+		Where("thumbnails.thumbnail <> ''").
 		Find(_range).Error
 
 	if err != nil {
@@ -169,9 +158,9 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		return nil, err
 	}
 
-	err = r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
+	redisErr := r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
 	if err != nil {
-		span.RecordError(err)
+		span.RecordError(redisErr)
 	}
 
 	instrumentation.CacheMissCounter.Add(1)
@@ -214,20 +203,4 @@ func (r *Repository) Delete(ctx context.Context, path string) (domain.Directory,
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).Where("path = ?", fmt.Sprintf("`%s`", path)).Delete(&domain.Directory{}).Error
 	return m, err
-}
-
-// **** TESTING **** //
-
-func getGrpcClient(addr string) (*grpc.ClientConn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
-	defer cancel()
-
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	}
-
-	return grpc.DialContext(ctx, addr, opts...)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"fuu/v/cmd/perceval/model"
 	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
 
 	"go.opentelemetry.io/otel"
@@ -24,7 +25,12 @@ func (t *ThumbnailsService) Generate(ctx context.Context, req *thumbnailspb.Gene
 	_, span := otel.Tracer(otelName).Start(ctx, "Generate")
 	defer span.End()
 
-	go convert(req.Path, req.Folder, req.Format, t.db, t.Logger)
+	test := model.Thumbnail{}
+	t.db.WithContext(ctx).First(&test, "folder = ?", req.Folder)
+
+	if test.Thumbnail == "" {
+		go convert(req.Path, req.Folder, req.Format, t.db, t.Logger)
+	}
 
 	return &thumbnailspb.GenerateResponse{
 		Thumbnail: &thumbnailspb.Thumbnail{

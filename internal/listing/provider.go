@@ -6,6 +6,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"gorm.io/gorm"
 )
 
@@ -38,12 +39,13 @@ func ProvideService(repository domain.ListingRepository) *Service {
 	return service
 }
 
-func ProvideRepository(db *gorm.DB, rdb *redis.Client, logger *zap.SugaredLogger) *Repository {
+func ProvideRepository(db *gorm.DB, rdb *redis.Client, conn *grpc.ClientConn, logger *zap.SugaredLogger) *Repository {
 	repositoryOnce.Do(func() {
 		repository = &Repository{
 			db:     db,
 			rdb:    rdb,
 			logger: logger,
+			conn:   conn,
 		}
 	})
 

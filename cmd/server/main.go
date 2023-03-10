@@ -27,8 +27,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -57,6 +60,11 @@ func run() <-chan error {
 
 	logger, _ := zapConfig.Build()
 
+	percevalConn, err := getGrpcClient("localhost:10099")
+	if err != nil {
+		panic(err)
+	}
+
 	defer logger.Sync()
 
 	logger.Info("starting fuu")
@@ -67,7 +75,7 @@ func run() <-chan error {
 		DB:       0,
 	})
 
-	err := initCacheDir()
+	err = initCacheDir()
 	if err != nil {
 		panic(err)
 	}
@@ -86,6 +94,7 @@ func run() <-chan error {
 		CacheDir:   cfg.CacheDir,
 		Database:   db,
 		Logger:     logger.Sugar(),
+		Conn:       percevalConn,
 	}
 
 	fileWatcher := workers.FileWatcher{
@@ -122,6 +131,7 @@ func run() <-chan error {
 		rdb:   rdb,
 		rmq:   rmq,
 		sugar: logger.Sugar(),
+		conn:  percevalConn,
 	})
 
 	// Thumbnailer worker
@@ -160,6 +170,7 @@ func run() <-chan error {
 
 		defer func() {
 			logger.Sync()
+			percevalConn.Close()
 			rdb.Close()
 			rmq.Close()
 			stop()
@@ -194,12 +205,13 @@ type ServerConfig struct {
 	rdb   *redis.Client
 	rmq   *internal.RabbitMQ
 	sugar *zap.SugaredLogger
+	conn  *grpc.ClientConn
 }
 
 func initServer(sc ServerConfig) *http.Server {
 	// Dependency injection containers
 	userContainer := user.Container(sc.db, sc.sugar)
-	listingContainer := listing.Container(sc.db, sc.rdb, sc.sugar)
+	listingContainer := listing.Container(sc.db, sc.rdb, sc.conn, sc.sugar)
 	galleryContainer := gallery.Container(sc.rdb, sc.sugar, sc.rmq.Channel, cfg.WorkingDir)
 
 	lmdw := func(next http.Handler) http.Handler {
@@ -326,4 +338,18 @@ func initCacheDir() error {
 
 	cfg.CacheDir = cacheDir
 	return nil
+}
+
+func getGrpcClient(addr string) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
+	defer cancel()
+
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	}
+
+	return grpc.DialContext(ctx, addr, opts...)
 }
