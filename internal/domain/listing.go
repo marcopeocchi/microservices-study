@@ -38,6 +38,8 @@ type ListingRepository interface {
 
 	FindAllByName(ctx context.Context, name string) (*[]Directory, error)
 
+	FindLikeNameRange(ctx context.Context, name string, take, skip int) (*[]Directory, error)
+
 	Delete(ctx context.Context, path string) (Directory, error)
 
 	FindAll(ctx context.Context) (*[]Directory, error)
@@ -52,7 +54,7 @@ type ListingService interface {
 
 	ListAllDirectories(ctx context.Context) (*[]DirectoryEnt, error)
 
-	ListAllDirectoriesLike(ctx context.Context, name string) (*[]DirectoryEnt, error)
+	ListAllDirectoriesLike(ctx context.Context, name string, take, skip int) (*[]DirectoryEnt, error)
 
 	ListAllDirectoriesRange(ctx context.Context, take, skip, order int) (*[]DirectoryEnt, error)
 }

@@ -54,7 +54,7 @@ func (h *Handler) ListAllDirectories() http.HandlerFunc {
 		var dirs *[]domain.DirectoryEnt
 
 		if filterBy != "" {
-			dirs, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy)
+			dirs, err = h.service.ListAllDirectoriesLike(r.Context(), filterBy, pageSize, (page-1)*pageSize)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

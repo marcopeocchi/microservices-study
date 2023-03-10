@@ -171,6 +171,70 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 	return _range, err
 }
 
+func (r *Repository) FindLikeNameRange(ctx context.Context, filter string, take, skip int) (*[]domain.Directory, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindLikeNameRange")
+	defer span.End()
+
+	cacheKey := base64.StdEncoding.EncodeToString(
+		[]byte(fmt.Sprintf("%s%d%d", filter, take, skip)),
+	)
+
+	r.logger.Infow("FindLikeNameRange", "filter", filter, "take", take, "skip", skip)
+	_range := new([]domain.Directory)
+
+	cached, _ := r.rdb.Get(ctx, cacheKey).Bytes()
+
+	if len(cached) > 0 {
+		json.Unmarshal(cached, _range)
+		instrumentation.CacheHitCounter.Add(1)
+		return _range, nil
+	}
+
+	client := thumbnailspb.NewThumbnailServiceClient(r.conn)
+
+	err := r.db.WithContext(ctx).
+		Table("directories").
+		Select("id", "name", "loved", "directories.path", "name", "created_at", "updated_at", "thumbnails.thumbnail").
+		Joins("left join thumbnails on directories.path = thumbnails.folder").
+		Limit(take).
+		Offset(skip).
+		Where("thumbnails.thumbnail <> '' AND name LIKE ?", "%"+filter+"%").
+		Find(_range).Error
+
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	res, err := client.GetRange(ctx, &thumbnailspb.GetRangeRequest{
+		Paths: []string{},
+	})
+
+	for _, t := range res.Thumbnails {
+		r.logger.Infoln(t.Path, t.Id)
+	}
+
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	encoded, err := json.Marshal(*_range)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	redisErr := r.rdb.SetNX(ctx, cacheKey, encoded, time.Minute).Err()
+	if err != nil {
+		span.RecordError(redisErr)
+	}
+
+	instrumentation.CacheMissCounter.Add(1)
+
+	return _range, err
+}
+
 func (r *Repository) FindAll(ctx context.Context) (*[]domain.Directory, error) {
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAll")
 	defer span.End()

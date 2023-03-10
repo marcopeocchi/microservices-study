@@ -62,11 +62,15 @@ func (s *Service) ListAllDirectoriesRange(ctx context.Context, take, skip, order
 	return &previews, nil
 }
 
-func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string) (*[]domain.DirectoryEnt, error) {
+func (s *Service) ListAllDirectoriesLike(ctx context.Context, name string, take, skip int) (*[]domain.DirectoryEnt, error) {
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.ListAllDirectoriesLike")
 	defer span.End()
 
-	dirs, err := s.repo.FindAllByName(ctx, name)
+	if len(name) <= 2 {
+		return &[]domain.DirectoryEnt{}, nil
+	}
+
+	dirs, err := s.repo.FindLikeNameRange(ctx, name, take, skip)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err

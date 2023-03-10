@@ -19,11 +19,13 @@ multiarch:
 linuxamd64:
 	GOOS=linux GOARCH=amd64 go build -o fuu cmd/server/main.go
 
-dev:
-	go run cmd/server/main.go -c "/Users/marco/dev/homebrew/fuu/Fuufile"
+fuu:
+	TESTING=true go run cmd/server/main.go \
+		-c "/Users/marco/dev/homebrew/fuu/Fuufile"
 
 knight:
-	RMQ_ENDPOINT=amqp://user:oseopilota@10.0.0.2:5672/ go run cmd/knight/*.go
+	RMQ_ENDPOINT=amqp://user:oseopilota@10.0.0.2:5672/ \
+		go run cmd/knight/*.go
 
 perceval:
 	JAEGER_ENDPOINT=http://10.0.0.2:14268/api/traces \
