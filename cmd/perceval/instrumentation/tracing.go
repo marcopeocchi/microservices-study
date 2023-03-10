@@ -1,7 +1,8 @@
 package instrumentation
 
 import (
-	"fuu/v/pkg/config"
+	"log"
+	"os"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -13,17 +14,24 @@ import (
 )
 
 func InitTracing() (*sdktrace.TracerProvider, error) {
-	url := config.Instance().JaegerEndpoint
+	url := os.Getenv("JAEGER_ENDPONT")
+
+	if url == "" {
+		url = "http://10.0.0.2:14268/api/traces"
+	}
+	log.Println(url)
+
 	xpt, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
 	if err != nil {
 		return nil, err
 	}
+
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithSyncer(xpt),
 		sdktrace.WithResource(resource.NewSchemaless(attribute.KeyValue{
 			Key:   semconv.ServiceNameKey,
-			Value: attribute.StringValue("fuu"),
+			Value: attribute.StringValue("perceval"),
 		})),
 	)
 

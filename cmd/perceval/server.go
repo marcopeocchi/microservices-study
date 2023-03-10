@@ -1,112 +1,98 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
-	"fuu/v/cmd/internal"
-	"net/http"
 
+	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
+
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-const consumerName = "knight"
+const (
+	otelName = "fuu/v/perceval/internal"
+	format   = "webp"
+)
 
-type Server struct {
-	srv    *http.Server
-	logger *zap.SugaredLogger
-	rmq    *internal.RabbitMQ
-	done   chan struct{}
+type ThumbnailsService struct {
+	db     *gorm.DB
+	Logger *zap.SugaredLogger
 }
 
-func (s *Server) ListenAndServe() error {
-	queue, err := s.rmq.Channel.QueueDeclare(
-		"",
-		false,
-		false,
-		true,
-		false,
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+func (t *ThumbnailsService) Generate(ctx context.Context, req *thumbnailspb.GenerateRequest) (*thumbnailspb.GenerateResponse, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "Generate")
+	defer span.End()
 
-	err = s.rmq.Channel.QueueBind(
-		queue.Name,
-		"thumbnail.event.*",
-		"thumbnails",
-		false,
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+	go convert(req.Path, req.Folder, req.Format, t.db, t.Logger)
 
-	msgs, err := s.rmq.Channel.Consume(
-		queue.Name,
-		consumerName,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for msg := range msgs {
-			s.logger.Infow("consumer", "message", msg.RoutingKey)
-
-			nack := false
-			switch msg.RoutingKey {
-			case "thumbnail.event.convert":
-				var res string
-
-				err := gob.NewDecoder(bytes.NewReader(msg.Body)).Decode(&res)
-				if err != nil {
-					s.logger.Errorw("decoding error", "error", err)
-					return
-				}
-				go convert(res, "webp", s.logger)
-			case "thumbnail.event.delete":
-				var res string
-
-				err := gob.NewDecoder(bytes.NewReader(msg.Body)).Decode(&res)
-				if err != nil {
-					s.logger.Errorw("decoding error", "error", err)
-					return
-				}
-				go convert(res, "webp", s.logger)
-			default:
-				nack = true
-			}
-
-			if nack {
-				s.logger.Warnw("consumer", "nack", nack)
-				msg.Nack(false, nack)
-			} else {
-				s.logger.Warnw("consumer", "ack", !nack)
-				msg.Ack(false)
-			}
-		}
-
-		s.done <- struct{}{}
-	}()
-
-	return s.srv.ListenAndServe()
+	return &thumbnailspb.GenerateResponse{
+		Thumbnail: &thumbnailspb.Thumbnail{
+			Id:     "",
+			Path:   req.Path,
+			Format: req.Format,
+		},
+	}, nil
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	s.rmq.Channel.Cancel(consumerName, false)
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-s.done:
-			return nil
+func (t *ThumbnailsService) Delete(ctx context.Context, req *thumbnailspb.DeleteRequest) (*thumbnailspb.DeleteResponse, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "Delete")
+	defer span.End()
+
+	//TODO: implementazione
+	err := delete(req.Path, t.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return &thumbnailspb.DeleteResponse{
+		Thumbnail: &thumbnailspb.Thumbnail{
+			Id:     "",
+			Path:   req.Path,
+			Format: format,
+		},
+	}, nil
+}
+
+func (t *ThumbnailsService) Get(ctx context.Context, req *thumbnailspb.GetRequest) (*thumbnailspb.GetResponse, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "Get")
+	defer span.End()
+
+	//TODO: implementazione
+	id, path, err := getByPath(req.Path, t.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return &thumbnailspb.GetResponse{
+		Thumbnail: &thumbnailspb.Thumbnail{
+			Id:     id,
+			Path:   path,
+			Format: format,
+		},
+	}, nil
+}
+
+func (t *ThumbnailsService) GetRange(ctx context.Context, req *thumbnailspb.GetRangeRequest) (*thumbnailspb.GetRangeResponse, error) {
+	_, span := otel.Tracer(otelName).Start(ctx, "Get")
+	defer span.End()
+
+	//TODO: implementazione
+	ids, err := getManyByPath(ctx, req.Paths, t.db, t.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*thumbnailspb.Thumbnail, len(*ids))
+
+	for i, pair := range *ids {
+		res[i] = &thumbnailspb.Thumbnail{
+			Id:   pair.Thumbnail,
+			Path: pair.Path,
 		}
 	}
+
+	return &thumbnailspb.GetRangeResponse{
+		Thumbnails: res,
+	}, nil
 }

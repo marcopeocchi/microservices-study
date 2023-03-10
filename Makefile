@@ -24,3 +24,8 @@ dev:
 
 knight:
 	RMQ_ENDPOINT=amqp://user:oseopilota@10.0.0.2:5672/ go run cmd/knight/*.go
+
+perceval:
+	JAEGER_ENDPOINT=http://10.0.0.2:14268/api/traces \
+		go run cmd/perceval/*.go \
+		-c "/Users/marco/dev/homebrew/fuu/cmd/perceval/PercevalFile"

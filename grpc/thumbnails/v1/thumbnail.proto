@@ -1,0 +1,11 @@
+syntax="proto3";
+
+package thumbnails.v1;
+
+option go_package = "fuu/v/gen/go/grpc/thumbnails/v1;thumbnailspb";
+
+message Thumbnail {
+  string id     = 1;
+  string path   = 2;
+  string format = 3;
+}

@@ -1,0 +1,50 @@
+syntax="proto3";
+
+package thumbnails.v1;
+
+option go_package = "fuu/v/gen/go/grpc/thumbnails/v1;thumbnailspb";
+
+import "grpc/thumbnails/v1/thumbnail.proto";
+
+service ThumbnailService {
+  rpc Generate(GenerateRequest) returns (GenerateResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  rpc GetRange(GetRangeRequest) returns (GetRangeResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
+}
+
+message GenerateRequest {
+  string path   = 1;
+  string folder = 2;
+  string format = 3;
+}
+
+message GenerateResponse {
+  Thumbnail thumbnail = 1;
+}
+
+message DeleteRequest {
+  string path   = 1;
+}
+
+message DeleteResponse {
+  Thumbnail thumbnail = 1;
+}
+
+message GetRequest {
+  string id     = 1;
+  string path   = 2;
+}
+
+message GetResponse {
+  Thumbnail thumbnail = 1;
+}
+
+message GetRangeRequest {
+  repeated string paths = 1;
+}
+
+message GetRangeResponse {
+  repeated Thumbnail thumbnails = 1;
+}
+

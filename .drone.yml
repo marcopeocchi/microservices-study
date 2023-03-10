@@ -33,6 +33,21 @@ steps:
   - mv ./knight /usr/bin/knight
   - systemctl restart knight
 
+---
+kind: pipeline
+type: exec
+name: Perceval Local deploy
+
+steps:
+- name: Compile backend
+  commands:
+  - /usr/local/go/bin/go build -o knight cmd/perceval/*.go
+- name: Deploy testing
+  commands:
+  - chmod +x ./perceval
+  - mv ./perceval /usr/bin/perceval
+  - systemctl restart perceval
+
 
 # Production build to docker hub
 # ---

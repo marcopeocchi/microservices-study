@@ -10,7 +10,7 @@ import (
 	"fuu/v/internal/gallery"
 	"fuu/v/internal/listing"
 	"fuu/v/internal/user"
-	config "fuu/v/pkg/config"
+	"fuu/v/pkg/config"
 	"fuu/v/pkg/instrumentation"
 	"fuu/v/pkg/middlewares"
 	"fuu/v/pkg/workers"

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: conversion/v1/conversion_service.proto
+// source: grpc/conversion/v1/conversion_service.proto
 
 package conversionpb
 
@@ -99,5 +99,5 @@ var ConversionService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "conversion/v1/conversion_service.proto",
+	Metadata: "grpc/conversion/v1/conversion_service.proto",
 }

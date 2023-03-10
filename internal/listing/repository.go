@@ -3,14 +3,19 @@ package listing
 import (
 	"context"
 	"fmt"
+	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
 	"fuu/v/internal/domain"
 	"fuu/v/pkg/instrumentation"
 	"time"
 
 	"github.com/goccy/go-json"
+	"github.com/marcopeocchi/fazzoletti/slices"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
@@ -86,7 +91,19 @@ func (r *Repository) FindAllByName(ctx context.Context, filter string) (*[]domai
 
 func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*[]domain.Directory, error) {
 	_, span := otel.Tracer(otelName).Start(ctx, "listing.FindAllRange")
-	defer span.End()
+
+	conn, err := getGrpcClient("localhost:10099")
+	if err != nil {
+		span.End()
+		r.logger.Fatalln(err)
+		return nil, err
+	}
+
+	client := thumbnailspb.NewThumbnailServiceClient(conn)
+	defer func() {
+		span.End()
+		conn.Close()
+	}()
 
 	r.logger.Infow("FindAllRange", "take", take, "skip", skip)
 	_range := new([]domain.Directory)
@@ -99,7 +116,34 @@ func (r *Repository) FindAllRange(ctx context.Context, take, skip, order int) (*
 		_order = "name"
 	}
 
-	err := r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range).Error
+	// err = r.db.WithContext(ctx).Order(_order).Limit(take).Offset(skip).Find(_range).Error
+	err = r.db.WithContext(ctx).
+		Joins("left join thumbnails on directories.path = thumbnails.folder").
+		Order(_order).
+		Limit(take).
+		Offset(skip).
+		Find(_range).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	paths := slices.Map(*_range, func(d domain.Directory) string {
+		return d.Path
+	})
+
+	res, err := client.GetRange(ctx, &thumbnailspb.GetRangeRequest{
+		Paths: paths,
+	})
+
+	for _, t := range res.Thumbnails {
+		r.logger.Infoln(t.Path, t.Id)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
 	return _range, err
 }
 
@@ -137,4 +181,20 @@ func (r *Repository) Delete(ctx context.Context, path string) (domain.Directory,
 	m := domain.Directory{}
 	err := r.db.WithContext(ctx).Where("path = ?", fmt.Sprintf("`%s`", path)).Delete(&domain.Directory{}).Error
 	return m, err
+}
+
+// **** TESTING **** //
+
+func getGrpcClient(addr string) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
+	defer cancel()
+
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	}
+
+	return grpc.DialContext(ctx, addr, opts...)
 }

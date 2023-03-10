@@ -4,7 +4,7 @@ package conversion.v1;
 
 option go_package = "fuu/v/gen/go/conversion/v1;conversionpb";
 
-import "conversion/v1/conversion.proto";
+import "grpc/conversion/v1/conversion.proto";
 
 service ConversionService {
   rpc Run(RunRequest) returns (RunResponse) {}

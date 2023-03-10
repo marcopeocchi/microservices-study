@@ -1,22 +1,25 @@
 package workers
 
 import (
-	"fmt"
+	"context"
 	"mime"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
+	"time"
 
+	thumbnailspb "fuu/v/gen/go/grpc/thumbnails/v1"
 	"fuu/v/internal/domain"
-	config "fuu/v/pkg/config"
+	"fuu/v/pkg/config"
 	utils "fuu/v/pkg/utils"
 
 	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/google/uuid"
 	"github.com/marcopeocchi/fazzoletti/slices"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
@@ -27,6 +30,8 @@ type Thumbnailer struct {
 	CacheDir   string
 	Database   *gorm.DB
 	Logger     *zap.SugaredLogger
+	conn       *grpc.ClientConn
+	client     thumbnailspb.ThumbnailServiceClient
 }
 
 type job struct {
@@ -38,7 +43,29 @@ type job struct {
 	IsImage        bool
 }
 
+func getGrpcClient(addr string) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2500)
+	defer cancel()
+
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	}
+
+	return grpc.DialContext(ctx, addr, opts...)
+}
+
 func (t *Thumbnailer) Generate() {
+	conn, err := getGrpcClient("localhost:10099")
+	t.client = thumbnailspb.NewThumbnailServiceClient(conn)
+
+	if err != nil {
+		panic(err)
+	}
+	t.conn = conn
+
 	t.prune()
 
 	files, err := os.ReadDir(t.BaseDir)
@@ -56,14 +83,6 @@ func (t *Thumbnailer) Generate() {
 			content, err := os.ReadDir(workingDir)
 			if err != nil {
 				t.Logger.Fatalln(err)
-			}
-
-			test := &domain.Directory{}
-			t.Database.Where("path = ?", workingDir).First(&test)
-
-			if test.Thumbnail != "" {
-				test = nil
-				continue
 			}
 
 			for _, f := range content {
@@ -104,76 +123,22 @@ func (t *Thumbnailer) Remove(dirpath string) {
 }
 
 func (t *Thumbnailer) mainThread(queue []job) {
-	// generate n thumbnails at time where n is core number
-	maxConcurrency := runtime.NumCPU()
 	t.Logger.Infow(
 		"starting thumbnailer",
-		"cores", maxConcurrency,
+		"cores", runtime.NumCPU(),
 		"directories", len(queue),
 	)
 
-	// block if guard channel is filled with n jobs
-	pipeline := make(chan int, maxConcurrency)
-	messages := make(chan job)
-
 	format := config.Instance().ImageOptimizationFormat
-
-	go t.thumbnailRefSaver(messages)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	for _, work := range queue {
-		// take
-		pipeline <- 1
-		// job closure
-		go func(w job) {
-			var cmd *exec.Cmd
-
-			if w.IsImage {
-				cmd = exec.Command(
-					"convert", w.InputFile,
-					"-geometry", fmt.Sprintf("x%d", t.ImgHeight),
-					"-format", format,
-					"-quality", strconv.Itoa(t.ImgQuality),
-					w.OutputFile,
-				)
-			} else {
-				cmd = exec.Command(
-					"ffmpeg",
-					"-i", w.InputFile,
-					"-ss", "00:00:01.000",
-					"-vframes", "1",
-					"-filter:v", fmt.Sprintf("scale=-1:%d", t.ImgHeight),
-					"-f", format,
-					w.OutputFile,
-				)
-			}
-			err := cmd.Start()
-			if err != nil {
-				t.Logger.Fatalln(err)
-			}
-			// join
-			err = cmd.Wait()
-			if err == nil {
-				t.Logger.Infow("generated thumbnail", "file", w.InputFile)
-			}
-			// Save to db
-			messages <- w
-			<-pipeline
-		}(work)
-	}
-}
-
-// Execute a db query for-each message received from the channel.
-// The operations should be serialized and so doable for sqlite.
-// A transaction setup to ensure the lock of the db.
-func (t *Thumbnailer) thumbnailRefSaver(messages chan job) {
-	for w := range messages {
-		if w.Id != "" {
-			t.Database.Create(&domain.Directory{
-				Name:      w.WorkingDirName,
-				Path:      w.WorkingDirPath,
-				Thumbnail: w.Id,
-			})
-		}
+		t.client.Generate(ctx, &thumbnailspb.GenerateRequest{
+			Path:   work.InputFile,
+			Folder: work.WorkingDirPath,
+			Format: format,
+		})
 	}
 }
 

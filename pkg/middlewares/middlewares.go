@@ -3,7 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"fuu/v/pkg/common"
-	config "fuu/v/pkg/config"
+	"fuu/v/pkg/config"
 	"net/http"
 	"os"
 	"strings"

@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	config "fuu/v/pkg/config"
+	"fuu/v/pkg/config"
 	"math/rand"
 	"os"
 	"strings"

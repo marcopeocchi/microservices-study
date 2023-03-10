@@ -1,4 +1,4 @@
-package pkg
+package config
 
 import (
 	"flag"
@@ -11,7 +11,7 @@ import (
 
 var (
 	instance   *Config
-	lock       = &sync.RWMutex{}
+	lock       sync.Mutex
 	configPath string
 )
 

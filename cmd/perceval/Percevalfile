@@ -1,0 +1,7 @@
+mysqlUser: pete_test
+mysqlPass: lafamigliaGriffin_è_qui99!
+mysqlAddr: 10.0.0.2
+mysqlPort: 3306
+mysqlDBName: fuu_test
+
+cacheDir: /Users/marco/.cache/fuu
