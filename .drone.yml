@@ -36,7 +36,7 @@ name: fuu_gateway
 steps:
 - name: Transpile frontend
   commands:
-  - cd cmd/server/frontend
+  - cd cmd/server/solid-frontend
   - pnpm i
   - pnpm build
 - name: Compile backend
