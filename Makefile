@@ -20,6 +20,10 @@ linuxamd64:
 	GOOS=linux GOARCH=amd64 go build -o fuu cmd/server/main.go
 
 fuu:
+	go run cmd/server/main.go \
+		-c "/Users/marco/dev/homebrew/fuu/Fuufile"
+
+fuutest:
 	TESTING=true go run cmd/server/main.go \
 		-c "/Users/marco/dev/homebrew/fuu/Fuufile"
 

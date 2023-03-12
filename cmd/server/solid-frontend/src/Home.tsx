@@ -26,8 +26,9 @@ const fetcher = async (signal: {
   filter: string,
 }) => {
   const res = await fetch(`${getHostOverlay()}/${composeQuery(signal.fetchMode, signal.filter, signal.page, 49)}`)
-  if (res.redirected || res.status != 200) {
-    throw new Error()
+  if (!res.ok) {
+    window.location.href = '/login'
+    throw new Error(`Error: ${res.status}`)
   }
   await new Promise(s => setTimeout(s, 250))
   const data: Paginated<Directory> = await res.json()
@@ -45,12 +46,6 @@ const App: Component = () => {
   const derivedSignal = () => { return { page: page(), fetchMode: fetchMode(), filter: filter() } }
 
   const [data] = createResource(derivedSignal, fetcher)
-
-  createEffect(() => {
-    if (data.error) {
-      navigate('/login')
-    }
-  })
 
   const navigate = useNavigate()
   const logout = useLogout()

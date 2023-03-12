@@ -7,19 +7,11 @@ import QuickAction from "./components/QuickAction"
 import Spinner from "./components/Spinner"
 import { getHostOverlay, getHostStatic } from "./utils/url"
 
-type GalleryResponse = {
-  avif: string[]
-  avifAvailable: boolean
-  webp: string[]
-  webpAvailable: boolean
-  source: string[]
-  cached: boolean
-}
-
 async function fetcher(path: string) {
   const res = await fetch(`${getHostOverlay()}/gallery?dir=${path}`)
-  if (res.redirected || res.status != 200) {
-    throw new Error()
+  if (!res.ok) {
+    window.location.href = '/login'
+    throw new Error(`Error: ${res.status}`)
   }
   const data: GalleryResponse = await res.json()
 
@@ -60,12 +52,6 @@ const Gallery: Component = () => {
     setMediaLoading(true)
     setIndex((index() <= 0 ? data().length - 1 : index() - 1) % data().length)
   }
-
-  createEffect(() => {
-    if (data.error) {
-      navigate('/login')
-    }
-  })
 
   createEffect(() => {
     if (showCounter()) {
@@ -163,7 +149,7 @@ const Gallery: Component = () => {
         <div></div>
         <div></div>
         <div class="hidden group-hover:group-hover:block text-sm mb-3">
-          Fuu v1.2
+          Fuu v2.0-solid
         </div>
       </nav>
       <Show when={!data.loading} fallback={<Spinner />}>

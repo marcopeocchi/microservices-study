@@ -13,3 +13,12 @@ type Paginated<T> = {
   pages: number
   totalElements: number
 }
+
+type GalleryResponse = {
+  avif: string[]
+  avifAvailable: boolean
+  webp: string[]
+  webpAvailable: boolean
+  source: string[]
+  cached: boolean
+}

@@ -61,12 +61,12 @@ func Authenticated(next http.Handler) http.Handler {
 		cookie, err := r.Cookie(common.TOKEN_COOKIE_NAME)
 
 		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
 
 		if cookie == nil {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
 
@@ -86,11 +86,13 @@ func Authenticated(next http.Handler) http.Handler {
 			}
 
 			if time.Now().After(expiresAt) {
-				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+				//http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+				http.Error(w, "token expired", http.StatusBadRequest)
 				return
 			}
 		} else {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			//http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
 
