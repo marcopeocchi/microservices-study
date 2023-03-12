@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	//go:embed frontend/dist
+	//go:embed solid-frontend/dist
 	reactApp embed.FS
 	cfg      = config.Instance()
 )
@@ -265,7 +265,7 @@ func initServer(sc ServerConfig) *http.Server {
 	r.Handle("/metrics", promhttp.Handler())
 
 	// Frontend
-	build, _ := fs.Sub(*sc.app, "frontend/dist")
+	build, _ := fs.Sub(*sc.app, "solid-frontend/dist")
 
 	sh := middlewares.SpaHandler{
 		Entrypoint: "index.html",
