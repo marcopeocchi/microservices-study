@@ -20,20 +20,6 @@ import { useLogout } from './hooks/useLogout'
 import { isOrderedByDate, isOrderedByName } from './utils/files'
 import { composeQuery, getHostOverlay } from './utils/url'
 
-const fetcher = async (signal: {
-  page: number,
-  fetchMode: string,
-  filter: string,
-}) => {
-  const res = await fetch(`${getHostOverlay()}/${composeQuery(signal.fetchMode, signal.filter, signal.page, 49)}`)
-  if (!res.ok) {
-    window.location.href = '/login'
-    throw new Error(`Error: ${res.status}`)
-  }
-  await new Promise(s => setTimeout(s, 250))
-  const data: Paginated<Directory> = await res.json()
-  return data
-}
 
 const App: Component = () => {
   const [fetchMode, setFetchMode] = createSignal(localStorage.getItem("fetch-mode") || "date")
@@ -43,12 +29,28 @@ const App: Component = () => {
   const [page, setPage] = createSignal(Number(window.location.hash.split('-').at(1)) || 1)
   const [listView, setListView] = createSignal(localStorage.getItem("listView") === "true")
 
+  const navigate = useNavigate()
+  const logout = useLogout()
+
   const derivedSignal = () => { return { page: page(), fetchMode: fetchMode(), filter: filter() } }
+
+  const fetcher = async (signal: {
+    page: number,
+    fetchMode: string,
+    filter: string,
+  }) => {
+    const res = await fetch(`${getHostOverlay()}/${composeQuery(signal.fetchMode, signal.filter, signal.page, 49)}`)
+    if (!res.ok) {
+      navigate('/login')
+      throw new Error(`Error: ${res.status}`)
+    }
+    await new Promise(s => setTimeout(s, 250))
+    const data: Paginated<Directory> = await res.json()
+    return data
+  }
 
   const [data] = createResource(derivedSignal, fetcher)
 
-  const navigate = useNavigate()
-  const logout = useLogout()
 
   let main: HTMLElement
 

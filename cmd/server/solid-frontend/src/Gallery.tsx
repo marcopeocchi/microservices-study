@@ -7,32 +7,34 @@ import QuickAction from "./components/QuickAction"
 import Spinner from "./components/Spinner"
 import { getHostOverlay, getHostStatic } from "./utils/url"
 
-async function fetcher(path: string) {
-  const res = await fetch(`${getHostOverlay()}/gallery?dir=${path}`)
-  if (!res.ok) {
-    window.location.href = '/login'
-    throw new Error(`Error: ${res.status}`)
-  }
-  const data: GalleryResponse = await res.json()
-
-  if (data.avifAvailable) {
-    return data.avif
-  }
-  if (data.webpAvailable) {
-    return data.webp
-  }
-  return data.source
-}
 
 const Gallery: Component = () => {
   let main: HTMLDivElement
 
   let slideshowTimer: number
 
+  const navigate = useNavigate()
   const [_, path] = useLocation().pathname.split('/gallery/')
+
+  async function fetcher(path: string) {
+    const res = await fetch(`${getHostOverlay()}/gallery?dir=${path}`)
+    if (!res.ok) {
+      navigate('/login')
+      throw new Error(`Error: ${res.status}`)
+    }
+    const data: GalleryResponse = await res.json()
+
+    if (data.avifAvailable) {
+      return data.avif
+    }
+    if (data.webpAvailable) {
+      return data.webp
+    }
+    return data.source
+  }
+
   const [data] = createResource(path, fetcher)
 
-  const navigate = useNavigate()
   const [index, setIndex] = createSignal(0)
 
   const [mediaLoading, setMediaLoading] = createSignal(true)
@@ -90,7 +92,7 @@ const Gallery: Component = () => {
           setFullscreen(state => !state)
           break
         case 'p':
-          setAutoEnabled(false)
+          setAutoEnabled(true)
           break
         default:
           break
